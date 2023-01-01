@@ -29,11 +29,8 @@ export const meta: MetaFunction = () => ({
 
 export let links: LinksFunction = () => {
   return [
-    // { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
-    // { rel: 'preconnect', href: 'https://fonts.gstatic.com' },
     {
-      // rel: 'stylesheet',
-      rel: 'preconnect',
+      rel: 'stylesheet',
       href: 'https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&display=swap'
     },
     { rel: "stylesheet", href: tailwindStylesheetUrl },
