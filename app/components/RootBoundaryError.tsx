@@ -7,7 +7,7 @@ interface Props {
 export function RootBoundaryError ({ error }: Props) {
 
   return (
-    <div className="shadow-md rounded-lg p-6">
+    <div className="shadow-md rounded-lg p-6 space-y-2">
       <h1 className="text-xl font-bold">
         {error.message ? error.message : "Something went wrong"}
       </h1>
