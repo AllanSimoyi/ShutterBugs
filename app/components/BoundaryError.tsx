@@ -1,10 +1,8 @@
 import {
   Alert, AlertDescription, AlertIcon,
-  AlertTitle
+  AlertTitle,
+  VStack
 } from '@chakra-ui/react';
-import { getSlideUpScrollVariants } from '../lib/scroll-variants';
-import { ScrollAnimation } from './ScrollAnimation';
-import { UltraCenteredView } from './UltraCenteredView';
 
 interface Props {
   title: string;
@@ -14,18 +12,34 @@ interface Props {
 export function BoundaryError (props: Props) {
   const { title, children } = props;
   return (
-    <UltraCenteredView py={4}>
-      <ScrollAnimation variants={getSlideUpScrollVariants({ delay: 0.1 })}>
-        <Alert
-          flexDirection='column' alignItems='center' justifyContent='center'
-          status='error' variant='subtle' textAlign='center' minHeight='200px'
-          borderRadius={10}
-        >
-          <AlertIcon boxSize='40px' mr={0} />
-          <AlertTitle mt={4} mb={1} fontSize='lg'>{title}</AlertTitle>
-          <AlertDescription maxWidth='sm'>{children}</AlertDescription>
-        </Alert>
-      </ScrollAnimation>
-    </UltraCenteredView>
+    <Alert
+      flexDirection='column'
+      alignItems='stretch'
+      justifyContent='center'
+      status='error'
+      variant='subtle'
+      textAlign='center'
+      minHeight='200px'
+      maxWidth={'600px'}
+      borderRadius={5}
+      p={6}
+    >
+      <VStack align="center">
+        <AlertIcon
+          boxSize='40px'
+          mr={0}
+        />
+      </VStack>
+      <VStack align="center" py={6}>
+        <AlertTitle fontSize='lg'>
+          {title}
+        </AlertTitle>
+      </VStack>
+      <AlertDescription>
+        <VStack align="stretch" spacing={6}>
+          {children}
+        </VStack>
+      </AlertDescription>
+    </Alert>
   )
 }
