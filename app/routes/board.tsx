@@ -1,4 +1,3 @@
-import { VStack } from "@chakra-ui/react";
 import type { MetaFunction } from "@remix-run/node";
 
 import { RootBoundaryError } from "~/components/RootBoundaryError";
@@ -12,8 +11,8 @@ export const meta: MetaFunction = () => {
 export default function LoginPage () {
 
   return (
-    <VStack justify="center" align="center" p={8}>
+    <div className="flex flex-col justify-center items-center p-8">
       <RootBoundaryError error={new Error("Something went wrong")} />
-    </VStack>
+    </div>
   );
 }
