@@ -112,8 +112,6 @@ export default function App () {
 }
 
 export function ErrorBoundary ({ error }: { error: Error }) {
-  console.error(error.message, error.stack);
-
   return (
     <html>
       <head>
