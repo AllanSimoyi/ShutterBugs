@@ -12,7 +12,7 @@ export function Footer () {
           spacing={{ base: 1, lg: 4 }}
           align="flex-start">
           <Text fontSize="sm" fontWeight="thin">
-            Copyright © {dayjs().format("YYYY")} www.property267.com - All rights reserved.
+            Copyright © {dayjs().format("YYYY")} Shutter - All rights reserved.
           </Text>
           <Spacer />
           <Stack

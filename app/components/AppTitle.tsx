@@ -6,7 +6,7 @@ export function AppTitle () {
   return (
     <Link to="/">
       <HStack align="center" spacing={2}>
-        <Img height={"48px"} objectFit="contain" src={logo} alt="Property267" />
+        <Img height={"48px"} objectFit="contain" src={logo} alt="Shutter" />
       </HStack>
     </Link>
   )
