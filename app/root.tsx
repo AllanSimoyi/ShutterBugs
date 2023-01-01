@@ -1,7 +1,7 @@
 // root.tsx
-import { ChakraProvider } from '@chakra-ui/react'
-import { withEmotionCache } from '@emotion/react'
-import type { LinksFunction, LoaderArgs, MetaFunction } from '@remix-run/node'
+import { ChakraProvider } from '@chakra-ui/react';
+import { withEmotionCache } from '@emotion/react';
+import type { LinksFunction, LoaderArgs, MetaFunction } from '@remix-run/node';
 import { json } from '@remix-run/node'; // Depends on the runtime you choose
 import {
   Links,
@@ -11,13 +11,14 @@ import {
   Scripts,
   ScrollRestoration,
   useLoaderData
-} from '@remix-run/react'
-import React, { useContext, useEffect } from 'react'
+} from '@remix-run/react';
+import React, { useContext, useEffect } from 'react';
 import { CloudinaryContextProvider } from './components/CloudinaryContextProvider';
-import { ClientStyleContext, ServerStyleContext } from './context'
-import { getUser } from "./session.server"
-import customStylesUrl from "./styles/custom.css"
-import tailwindStylesheetUrl from "./styles/tailwind.css"
+import { RootBoundaryError } from './components/RootBoundaryError';
+import { ClientStyleContext, ServerStyleContext } from './context';
+import { getUser } from "./session.server";
+import customStylesUrl from "./styles/custom.css";
+import tailwindStylesheetUrl from "./styles/tailwind.css";
 import theme from './theme';
 
 export const meta: MetaFunction = () => ({
@@ -112,25 +113,18 @@ export default function App () {
 
 export function ErrorBoundary ({ error }: { error: Error }) {
   console.error(error.message, error.stack);
-  
+
   return (
     <html>
       <head>
-        <title>Oh no!</title>
+        <title>
+          Oh no!
+        </title>
         <Meta />
         <Links />
       </head>
       <body>
-        <div style={{
-          display: "flex", flexDirection: "column", justifyContent: "center",
-          alignItems: "center", padding: "24px", width: "100%"
-        }}>
-          <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", padding: "24px" }}>
-            <img src="../../images/logo.png" alt="Zim Loans Online" style={{ height: "72px" }} />
-          </div>
-          <h1 style={{ color: "orange" }}>Something went wrong</h1>
-          <p style={{ marginTop: "12px" }}>We're already working on fixing it.</p>
-        </div>
+        <RootBoundaryError error={error} />
         <Scripts />
       </body>
     </html>
