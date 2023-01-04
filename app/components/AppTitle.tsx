@@ -4,7 +4,7 @@ import { Link } from "@remix-run/react";
 export function AppTitle () {
   return (
     <Link to="/">
-      <Heading>Shutter</Heading>
+      <Heading size="md">Shutter</Heading>
     </Link>
   )
 }
