@@ -1,5 +1,5 @@
 // root.tsx
-import { ChakraProvider } from '@chakra-ui/react';
+import { ChakraProvider, cookieStorageManagerSSR, localStorageManager } from '@chakra-ui/react';
 import { withEmotionCache } from '@emotion/react';
 import type { LinksFunction, LoaderArgs, MetaFunction } from '@remix-run/node';
 import { json } from '@remix-run/node'; // Depends on the runtime you choose
@@ -86,20 +86,29 @@ const Document = withEmotionCache(
 );
 
 export async function loader ({ request }: LoaderArgs) {
-  const user = await getUser(request);
+  // const user = await getUser(request);
 
   const CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME || "";
   const UPLOAD_RESET = process.env.CLOUDINARY_UPLOAD_RESET || "";
 
-  return json({ user, CLOUD_NAME, UPLOAD_RESET });
+  const cookies = request.headers.get("cookie") ?? '';
+
+  return json({ CLOUD_NAME, UPLOAD_RESET, cookies });
 }
 
 export default function App () {
-  const { CLOUD_NAME, UPLOAD_RESET } = useLoaderData<typeof loader>();
+  const { CLOUD_NAME, UPLOAD_RESET, cookies } = useLoaderData<typeof loader>();
 
   return (
     <Document>
-      <ChakraProvider theme={theme}>
+      <ChakraProvider
+        theme={theme}
+        colorModeManager={
+          typeof cookies === 'string'
+            ? cookieStorageManagerSSR(cookies)
+            : localStorageManager
+        }
+      >
         <CloudinaryContextProvider CLOUDINARY_CLOUD_NAME={CLOUD_NAME} CLOUDINARY_UPLOAD_RESET={UPLOAD_RESET}>
           <Outlet />
         </CloudinaryContextProvider>
