@@ -1,16 +1,27 @@
-import { baseTheme, extendTheme, withDefaultColorScheme } from '@chakra-ui/react'
+import type { ThemeConfig} from '@chakra-ui/react';
+import { baseTheme, extendTheme, withDefaultColorScheme } from '@chakra-ui/react';
+
+export const themeColors = {
+  primary: baseTheme.colors.gray,
+}
+
+const config: ThemeConfig = {
+  initialColorMode: 'system',
+  useSystemColorMode: true,
+}
 
 const theme = extendTheme(
   {
+    config,
     fonts: {
       heading: `'Montserrat', sans-serif`,
       body: `'Montserrat', sans-serif`,
     },
     colors: {
-      primary: baseTheme.colors.red,
+      primary: themeColors.primary,
     }
   },
   withDefaultColorScheme({ colorScheme: 'primary' })
-)
+);
 
 export default theme
