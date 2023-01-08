@@ -1,5 +1,5 @@
 // root.tsx
-import { ChakraProvider, cookieStorageManagerSSR, localStorageManager } from '@chakra-ui/react';
+import { ChakraProvider, cookieStorageManagerSSR, localStorageManager, useColorMode, VStack } from '@chakra-ui/react';
 import { withEmotionCache } from '@emotion/react';
 import type { LinksFunction, LoaderArgs, MetaFunction } from '@remix-run/node';
 import { json } from '@remix-run/node'; // Depends on the runtime you choose
@@ -13,19 +13,30 @@ import {
   useLoaderData
 } from '@remix-run/react';
 import React, { useContext, useEffect } from 'react';
-import { CloudinaryContextProvider } from './components/CloudinaryContextProvider';
-import { RootBoundaryError } from './components/RootBoundaryError';
+import { CloudinaryContextProvider, RootBoundaryError } from 'remix-chakra-reusables';
 import { ClientStyleContext, ServerStyleContext } from './context';
-import { getUser } from "./session.server";
+import { PRODUCT_NAME } from './lib/constants';
+import { AppLinks } from './lib/links';
 import customStylesUrl from "./styles/custom.css";
 import tailwindStylesheetUrl from "./styles/tailwind.css";
 import theme from './theme';
 
-export const meta: MetaFunction = () => ({
-  charset: 'utf-8',
-  title: 'Shutter',
-  viewport: 'width=device-width,initial-scale=1',
-});
+export const meta: MetaFunction = () => {
+  const description = "Home of enthusiastic photographers";
+  return {
+    charset: 'utf-8',
+    title: PRODUCT_NAME,
+    description,
+    keywords: "Pictures, Photographers, Zimbabwe, Camera, Art, Aesthetic",
+    viewport: 'width=device-width,initial-scale=1',
+    "twitter:image": "https://res.cloudinary.com/df5xcjry9/image/upload/v1673178596/shutter_bugs_photo_daupcl.jpg",
+    "twitter:card": "summary_large_image",
+    "twitter:creator": "@simoyi_allan",
+    "twitter:site": "@simoyi_allan",
+    "twitter:title": PRODUCT_NAME,
+    "twitter:description": description,
+  }
+};
 
 export let links: LinksFunction = () => {
   return [
@@ -96,6 +107,18 @@ export async function loader ({ request }: LoaderArgs) {
   return json({ CLOUD_NAME, UPLOAD_RESET, cookies });
 }
 
+function Bg ({ children }: { children: React.ReactNode; }) {
+  const { colorMode } = useColorMode();
+  return (
+    <VStack
+      align="stretch"
+      bgColor={colorMode === "light" ? "blackAlpha.100" : undefined}
+    >
+      {children}
+    </VStack>
+  )
+}
+
 export default function App () {
   const { CLOUD_NAME, UPLOAD_RESET, cookies } = useLoaderData<typeof loader>();
 
@@ -110,7 +133,9 @@ export default function App () {
         }
       >
         <CloudinaryContextProvider CLOUDINARY_CLOUD_NAME={CLOUD_NAME} CLOUDINARY_UPLOAD_RESET={UPLOAD_RESET}>
-          <Outlet />
+          <Bg>
+            <Outlet />
+          </Bg>
         </CloudinaryContextProvider>
       </ChakraProvider>
     </Document>
@@ -128,7 +153,10 @@ export function ErrorBoundary ({ error }: { error: Error }) {
         <Links />
       </head>
       <body>
-        <RootBoundaryError error={error} />
+        <RootBoundaryError
+          error={error}
+          customerCareLink={AppLinks.CustomerCare}
+        />
         <Scripts />
       </body>
     </html>
