@@ -1,171 +1,154 @@
+import { Button, CardBody, CardFooter, CardHeader, Center, Heading, HStack, Spacer, VStack } from "@chakra-ui/react";
 import type { ActionArgs, LoaderArgs, MetaFunction } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
-import { Form, Link, useActionData, useSearchParams } from "@remix-run/react";
-import * as React from "react";
+import { Form, Link, useActionData, useTransition } from "@remix-run/react";
+import type { CustomActionData } from "remix-chakra-reusables";
+import { ActionContextProvider, badRequest, CustomAlert, getRawFormFields, PrimaryButton, processBadRequest, TextField, ToggleColorMode } from "remix-chakra-reusables";
+import { z } from "zod";
+import { CustomCard, CustomCatchBoundary, CustomErrorBoundary } from "~/components/CustomComponents";
+import { EmailSchema, PasswordSchema } from "~/lib/auth.validations";
+import { PRODUCT_NAME } from "~/lib/constants";
+import { AppLinks } from "~/lib/links";
+import { createUser, getUserByEmail } from "~/lib/user.server";
+import { createUserSession, getUserId } from "~/session.server";
 
-import { getUserId, createUserSession } from "~/session.server";
+export const meta: MetaFunction = () => {
+  return {
+    title: `${PRODUCT_NAME} - Create Account`,
+  };
+};
 
-import { createUser, getUserByEmail } from "~/models/user.server";
-import { safeRedirect, validateEmail } from "~/utils";
+const Schema = z
+  .object({
+    email: EmailSchema,
+    password: PasswordSchema,
+    passwordConfirmation: PasswordSchema,
+  })
+  .refine((data) => data.password === data.passwordConfirmation, {
+    message: "Passwords don't match",
+    path: ["passwordConfirmation"],
+  });
 
-export async function loader({ request }: LoaderArgs) {
-  const userId = await getUserId(request);
-  if (userId) return redirect("/");
+export async function loader ({ request }: LoaderArgs) {
+  const currentUserId = await getUserId(request);
+  if (currentUserId) {
+    return redirect("/");
+  }
   return json({});
 }
 
-export async function action({ request }: ActionArgs) {
-  const formData = await request.formData();
-  const email = formData.get("email");
-  const password = formData.get("password");
-  const redirectTo = safeRedirect(formData.get("redirectTo"), "/");
+export async function action ({ request }: ActionArgs) {
+  const fields = await getRawFormFields(request);
 
-  if (!validateEmail(email)) {
-    return json(
-      { errors: { email: "Email is invalid", password: null } },
-      { status: 400 }
-    );
+  const result = await Schema.safeParseAsync(fields);
+  if (!result.success) {
+    return processBadRequest(result.error, fields);
   }
-
-  if (typeof password !== "string" || password.length === 0) {
-    return json(
-      { errors: { email: null, password: "Password is required" } },
-      { status: 400 }
-    );
-  }
-
-  if (password.length < 8) {
-    return json(
-      { errors: { email: null, password: "Password is too short" } },
-      { status: 400 }
-    );
-  }
+  const { email, password } = result.data;
 
   const existingUser = await getUserByEmail(email);
   if (existingUser) {
-    return json(
-      {
-        errors: {
-          email: "A user already exists with this email",
-          password: null,
-        },
-      },
-      { status: 400 }
-    );
+    return badRequest({
+      fields,
+      fieldErrors: { email: ["A user already exists with this email"] },
+      formError: undefined,
+    });
   }
 
   const user = await createUser(email, password);
-
   return createUserSession({
     request,
     userId: user.id,
     remember: false,
-    redirectTo,
+    redirectTo: "/",
   });
 }
 
-export const meta: MetaFunction = () => {
-  return {
-    title: "Sign Up",
-  };
-};
+export default function CreateAccount () {
+  const actionData = useActionData<CustomActionData<typeof Schema>>();
+  const transition = useTransition();
 
-export default function Join() {
-  const [searchParams] = useSearchParams();
-  const redirectTo = searchParams.get("redirectTo") ?? undefined;
-  const actionData = useActionData<typeof action>();
-  const emailRef = React.useRef<HTMLInputElement>(null);
-  const passwordRef = React.useRef<HTMLInputElement>(null);
-
-  React.useEffect(() => {
-    if (actionData?.errors?.email) {
-      emailRef.current?.focus();
-    } else if (actionData?.errors?.password) {
-      passwordRef.current?.focus();
-    }
-  }, [actionData]);
+  const isProcessing = transition.state === "submitting" ||
+    transition.state === "loading";
 
   return (
-    <div className="flex min-h-full flex-col justify-center">
-      <div className="mx-auto w-full max-w-md px-8">
-        <Form method="post" className="space-y-6">
-          <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Email address
-            </label>
-            <div className="mt-1">
-              <input
-                ref={emailRef}
-                id="email"
-                required
-                autoFocus={true}
-                name="email"
-                type="email"
-                autoComplete="email"
-                aria-invalid={actionData?.errors?.email ? true : undefined}
-                aria-describedby="email-error"
-                className="w-full rounded border border-gray-500 px-2 py-1 text-lg"
-              />
-              {actionData?.errors?.email && (
-                <div className="pt-1 text-red-700" id="email-error">
-                  {actionData.errors.email}
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div>
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Password
-            </label>
-            <div className="mt-1">
-              <input
-                id="password"
-                ref={passwordRef}
-                name="password"
-                type="password"
-                autoComplete="new-password"
-                aria-invalid={actionData?.errors?.password ? true : undefined}
-                aria-describedby="password-error"
-                className="w-full rounded border border-gray-500 px-2 py-1 text-lg"
-              />
-              {actionData?.errors?.password && (
-                <div className="pt-1 text-red-700" id="password-error">
-                  {actionData.errors.password}
-                </div>
-              )}
-            </div>
-          </div>
-
-          <input type="hidden" name="redirectTo" value={redirectTo} />
-          <button
-            type="submit"
-            className="w-full rounded bg-blue-500  py-2 px-4 text-white hover:bg-blue-600 focus:bg-blue-400"
-          >
-            Create Account
-          </button>
-          <div className="flex items-center justify-center">
-            <div className="text-center text-sm text-gray-500">
-              Already have an account?{" "}
-              <Link
-                className="text-blue-500 underline"
-                to={{
-                  pathname: "/login",
-                  search: searchParams.toString(),
-                }}
-              >
-                Log in
-              </Link>
-            </div>
-          </div>
-        </Form>
-      </div>
-    </div>
+    <VStack align="stretch" minH="100vh">
+      <HStack p={4}>
+        <Spacer />
+        <ToggleColorMode aria-label="Toggle Dark Mode" />
+      </HStack>
+      <VStack justify="center" align="stretch" flexGrow={1} py={8}>
+        <Center>
+          <VStack justify={"center"} align="stretch" p={4} w={["100%", "80%", "40%"]}>
+            <Form method="post">
+              <ActionContextProvider {...actionData} isSubmitting={isProcessing}>
+                <VStack align="stretch" spacing={6}>
+                  <CustomCard>
+                    <CardHeader>
+                      <VStack justify="center" align="center">
+                        <Heading size='md'>
+                          ShutterBugs - Create Account
+                        </Heading>
+                      </VStack>
+                    </CardHeader>
+                    <CardBody>
+                      <VStack align="stretch" spacing={4}>
+                        <TextField
+                          name="email"
+                          type="email"
+                          label="Email Address"
+                        />
+                        <TextField
+                          name="password"
+                          label="Password"
+                          type="password"
+                        />
+                        <TextField
+                          name="passwordConfirmation"
+                          label="Re-Enter Password"
+                          type="password"
+                        />
+                        {actionData?.formError && (
+                          <CustomAlert status={"error"}>
+                            {actionData.formError}
+                          </CustomAlert>
+                        )}
+                      </VStack>
+                    </CardBody>
+                    <CardFooter>
+                      <VStack w="100%" align="stretch" spacing={4}>
+                        <PrimaryButton type="submit" isDisabled={isProcessing}>
+                          {isProcessing ? "Creating Account..." : "Create Account"}
+                        </PrimaryButton>
+                        <Button
+                          as={Link}
+                          prefetch="render"
+                          to={AppLinks.Login}
+                          type="button"
+                          fontSize="sm"
+                          variant="outline"
+                          isDisabled={isProcessing}
+                          w="100%"
+                        >
+                          {"Already Have An Account"}
+                        </Button>
+                      </VStack>
+                    </CardFooter>
+                  </CustomCard>
+                </VStack>
+              </ActionContextProvider>
+            </Form>
+          </VStack>
+        </Center>
+      </VStack>
+    </VStack>
   );
+}
+
+export function CatchBoundary () {
+  return <CustomCatchBoundary />
+}
+
+export function ErrorBoundary ({ error }: { error: Error }) {
+  return <CustomErrorBoundary error={error} />
 }
