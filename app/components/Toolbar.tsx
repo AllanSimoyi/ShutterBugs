@@ -19,7 +19,7 @@ export function Toolbar (props: ToolbarProps) {
       boxShadow="sm"
       align={"stretch"}
       position="relative"
-      backdropFilter="saturate(180%) blur(5px)"
+      backdropFilter="saturate(240%) blur(10px)"
       backgroundColor={colorMode === "light" ? "whiteAlpha.800" : "whiteAlpha.200"}
       style={{ position: 'sticky' }}
       sx={{ position: '-webkit-sticky', top: '0' }}
