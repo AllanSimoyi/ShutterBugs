@@ -112,6 +112,7 @@ function Bg ({ children }: { children: React.ReactNode; }) {
   return (
     <VStack
       align="stretch"
+      minH="100vh"
       bgColor={colorMode === "light" ? "blackAlpha.100" : undefined}
     >
       {children}
