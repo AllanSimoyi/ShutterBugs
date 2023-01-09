@@ -1,5 +1,4 @@
 import type { User } from "@prisma/client";
-import bcrypt from "bcryptjs";
 import { z } from "zod";
 
 export const EmailSchema = z
@@ -19,10 +18,6 @@ export const ChangePasswordSchema = z.object({
   currentPassword: z.string().min(1),
   newPassword: PasswordSchema,
 })
-
-export function createPasswordHash (password: string) {
-  return bcrypt.hash(password, 10);
-}
 
 export function parseRedirectUrl (url: string) {
   const DEFAULT_REDIRECT = "/";
