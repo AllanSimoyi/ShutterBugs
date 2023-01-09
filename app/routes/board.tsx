@@ -1,6 +1,8 @@
+import { Link as ChakraLink, Text, VStack } from '@chakra-ui/react';
 import type { MetaFunction } from "@remix-run/node";
-
-import { RootBoundaryError } from "~/components/RootBoundaryError";
+import { Link } from '@remix-run/react';
+import { BoundaryError, PrimaryButton } from "remix-chakra-reusables";
+import { AppLinks } from '~/lib/links';
 
 export const meta: MetaFunction = () => {
   return {
@@ -8,11 +10,28 @@ export const meta: MetaFunction = () => {
   };
 };
 
-export default function LoginPage () {
+export default function BoardPage () {
 
   return (
-    <div className="flex flex-col justify-center items-center p-8">
-      <RootBoundaryError error={new Error("Something went wrong")} />
-    </div>
+    <VStack align="stretch" spacing={4}>
+      <VStack align="center" py={8}>
+        <BoundaryError title="Error 400 - Bad Request">
+          <Text fontSize="sm" textAlign={"center"}>
+            "Please provide a valid product ID"
+          </Text>
+          <Text fontSize="sm" textAlign={"center"}>
+            We received a malformed or invalid request. <br />
+            Please review your input and ensure it is valid. <br />
+            If the issue pesists,&nbsp;
+            <ChakraLink color="blue.600" fontWeight={"semibold"} as={Link} to={AppLinks.CustomerCare}>
+              contact Customer Care
+            </ChakraLink>
+          </Text>
+          <PrimaryButton onClick={() => {}}>
+            Reload
+          </PrimaryButton>
+        </BoundaryError>
+      </VStack>
+    </VStack>
   );
 }
