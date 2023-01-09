@@ -15,7 +15,7 @@ async function seed () {
   const Allan = await prisma.user.create({
     data: {
       email: "allansimoyi@gmail.com",
-      fullName: "Allan Simoyi",
+      fullName: "Allan",
       picId: "glasses_trubcp",
       hashedPassword: await createPasswordHash("jarnbjorn@7891"),
     },
@@ -24,7 +24,7 @@ async function seed () {
   const Kudzie = await prisma.user.create({
     data: {
       email: "kudziesimoyi@gmail.com",
-      fullName: "Kudzaishe Simoyi",
+      fullName: "Kudzie",
       picId: "Kudzie_gzmuzx",
       hashedPassword: await createPasswordHash("jarnbjorn@7891"),
     },
@@ -39,9 +39,10 @@ async function seed () {
           userId: Allan.id,
           images: {
             create: [
-              { imageId: "cld-image" },
-              { imageId: "cld-image" },
-              { imageId: "cld-image" },
+              { imageId: "Image_One" },
+              { imageId: "Two_c11yl7" },
+              { imageId: "Three_whxzvj" },
+              { imageId: "Four_u2avvl" },
             ]
           },
           likes: {
@@ -70,9 +71,10 @@ async function seed () {
           userId: Kudzie.id,
           images: {
             create: [
-              { imageId: "cld-image" },
-              { imageId: "cld-image" },
-              { imageId: "cld-image" },
+              { imageId: "Image_One" },
+              { imageId: "Two_c11yl7" },
+              { imageId: "Three_whxzvj" },
+              { imageId: "Four_u2avvl" },
             ]
           },
           likes: {
@@ -92,22 +94,22 @@ async function seed () {
       });
     }, Promise.resolve());
 
-    const posts = await prisma.post.findMany({
-      select: {
-        id: true,
-        userId: true,
+  const posts = await prisma.post.findMany({
+    select: {
+      id: true,
+      userId: true,
+    }
+  });
+
+  await posts.reduce(async (acc, post) => {
+    await acc;
+    await prisma.commentLike.create({
+      data: {
+        postId: post.id,
+        userId: post.userId === Allan.id ? Kudzie.id : Allan.id,
       }
     });
-
-    await posts.reduce(async (acc, post) => {
-      await acc;
-      await prisma.commentLike.create({
-        data: {
-          postId: post.id,
-          userId: post.userId === Allan.id ? Kudzie.id : Allan.id,
-        }
-      });
-    }, Promise.resolve());
+  }, Promise.resolve());
 
   console.log(`Database has been seeded. 🌱`);
 }
