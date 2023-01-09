@@ -1,22 +1,26 @@
-import { Card, useColorMode } from "@chakra-ui/react";
-import { RouteCatchBoundary, RouteErrorBoundary } from "remix-chakra-reusables"
-import { AppLinks } from "~/lib/links"
+import { Card, useColorMode, VStack } from "@chakra-ui/react";
+import { RouteCatchBoundary, RouteErrorBoundary } from "remix-chakra-reusables";
+import { AppLinks } from "~/lib/links";
 
 export function CustomCatchBoundary () {
   return (
-    <RouteCatchBoundary
-      customerCareLink={AppLinks.CustomerCare}
-      loginLink={AppLinks.Login}
-    />
+    <VStack justify="center" align="center" p={4}>
+      <RouteCatchBoundary
+        customerCareLink={AppLinks.CustomerCare}
+        loginLink={AppLinks.Login}
+      />
+    </VStack>
   )
 }
 
 export function CustomErrorBoundary ({ error }: { error: Error }) {
   return (
-    <RouteErrorBoundary
-      error={error}
-      customerCareLink={AppLinks.CustomerCare}
-    />
+    <VStack justify="center" align="center" p={4}>
+      <RouteErrorBoundary
+        error={error}
+        customerCareLink={AppLinks.CustomerCare}
+      />
+    </VStack>
   )
 }
 
