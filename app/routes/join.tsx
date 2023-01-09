@@ -2,8 +2,8 @@ import { Button, CardBody, CardFooter, CardHeader, Center, Heading, HStack, Spac
 import type { ActionArgs, LoaderArgs, MetaFunction } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { Form, Link, useActionData, useTransition } from "@remix-run/react";
-import type { CustomActionData } from "remix-chakra-reusables";
-import { ActionContextProvider, badRequest, CustomAlert, getRawFormFields, PrimaryButton, processBadRequest, TextField, ToggleColorMode } from "remix-chakra-reusables";
+import type { CustomActionData} from "remix-chakra-reusables";
+import { ActionContextProvider, badRequest, CustomAlert, FullNameSchema, getRawFormFields, PrimaryButton, processBadRequest, TextField, ToggleColorMode } from "remix-chakra-reusables";
 import { z } from "zod";
 import { CustomCard, CustomCatchBoundary, CustomErrorBoundary } from "~/components/CustomComponents";
 import { EmailSchema, PasswordSchema } from "~/lib/auth.validations";
@@ -21,6 +21,7 @@ export const meta: MetaFunction = () => {
 const Schema = z
   .object({
     email: EmailSchema,
+    fullName: FullNameSchema,
     password: PasswordSchema,
     passwordConfirmation: PasswordSchema,
   })
@@ -44,7 +45,7 @@ export async function action ({ request }: ActionArgs) {
   if (!result.success) {
     return processBadRequest(result.error, fields);
   }
-  const { email, password } = result.data;
+  const { email, fullName, password } = result.data;
 
   const existingUser = await getUserByEmail(email);
   if (existingUser) {
@@ -55,7 +56,7 @@ export async function action ({ request }: ActionArgs) {
     });
   }
 
-  const user = await createUser(email, password);
+  const user = await createUser({ email, fullName, password, picId: "" });
   return createUserSession({
     request,
     userId: user.id,
@@ -93,6 +94,11 @@ export default function CreateAccount () {
                     </CardHeader>
                     <CardBody>
                       <VStack align="stretch" spacing={4}>
+                        <TextField
+                          name="fullName"
+                          type="text"
+                          label="Full Name"
+                        />
                         <TextField
                           name="email"
                           type="email"
