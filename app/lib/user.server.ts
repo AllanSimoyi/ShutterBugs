@@ -1,62 +1,58 @@
-import type { Password, User } from "@prisma/client";
+import type { User } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 import { prisma } from "~/db.server";
+import { createPasswordHash } from "./auth.server";
 
 export type { User } from "@prisma/client";
 
-export async function getUserById(id: User["id"]) {
+export async function getUserById (id: User["id"]) {
   return prisma.user.findUnique({ where: { id } });
 }
 
-export async function getUserByEmail(email: User["email"]) {
+export async function getUserByEmail (email: User["email"]) {
   return prisma.user.findUnique({ where: { email } });
 }
 
-export async function createUser(email: User["email"], password: string) {
-  const hashedPassword = await bcrypt.hash(password, 10);
+interface CreateUserProps {
+  email: string;
+  fullName: string;
+  picId: string;
+  password: string;
+}
+export async function createUser (props: CreateUserProps) {
+  const { email, fullName, picId, password } = props;
 
   return prisma.user.create({
     data: {
       email,
-      password: {
-        create: {
-          hash: hashedPassword,
-        },
-      },
+      fullName,
+      picId,
+      hashedPassword: await createPasswordHash(password),
     },
   });
 }
 
-export async function deleteUserByEmail(email: User["email"]) {
+export async function deleteUserByEmail (email: User["email"]) {
   return prisma.user.delete({ where: { email } });
 }
 
-export async function verifyLogin(
-  email: User["email"],
-  password: Password["hash"]
-) {
+export async function verifyLogin (email: User["email"], password: string) {
   const userWithPassword = await prisma.user.findUnique({
     where: { email },
-    include: {
-      password: true,
-    },
   });
-
-  if (!userWithPassword || !userWithPassword.password) {
+  if (!userWithPassword) {
     return null;
   }
 
   const isValid = await bcrypt.compare(
     password,
-    userWithPassword.password.hash
+    userWithPassword.hashedPassword
   );
-
   if (!isValid) {
     return null;
   }
 
-  const { password: _password, ...userWithoutPassword } = userWithPassword;
-
+  const { hashedPassword: _password, ...userWithoutPassword } = userWithPassword;
   return userWithoutPassword;
 }
