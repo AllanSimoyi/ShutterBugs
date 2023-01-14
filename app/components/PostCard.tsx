@@ -1,9 +1,9 @@
-import { CardBody, Divider, Link as ChakraLink, Text, useColorMode, VStack } from "@chakra-ui/react";
+import { CardBody, Divider, Link as ChakraLink, Text, useColorMode, useToast, VStack } from "@chakra-ui/react";
 import { byRadius } from "@cloudinary/url-gen/actions/roundCorners";
-import { Link } from "@remix-run/react";
+import { Link, useFetcher } from "@remix-run/react";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import 'react-gallery-carousel/dist/index.css';
 import { useCloudinary } from "remix-chakra-reusables";
 import { AppLinks } from "~/lib/links";
@@ -16,11 +16,17 @@ dayjs.extend(relativeTime);
 
 interface Props {
   currentUserId: string | undefined;
+  currentUserFullName: string | undefined;
   postId: string;
   userImageId: string;
   userFullName: string;
   numLikes: number;
   likedByCurrentUser: boolean;
+  lastComments: {
+    id: string;
+    userFullName: string;
+    content: string;
+  }[],
   numComments: number;
   description: string;
   imageIds: string[];
@@ -28,12 +34,34 @@ interface Props {
 }
 
 export function PostCard (props: Props) {
-  const { currentUserId, postId, userImageId, likedByCurrentUser } = props;
-  const { numLikes, description, userFullName, imageIds } = props;
+  const { currentUserId, currentUserFullName, postId, userImageId, likedByCurrentUser } = props;
+  const { lastComments, numLikes, description, userFullName, imageIds } = props;
   const { createdAt, numComments } = props;
 
   const { CloudinaryUtil } = useCloudinary();
   const { colorMode } = useColorMode();
+  const fetcher = useFetcher();
+  const toast = useToast();
+  const commentRef = useRef<HTMLInputElement>(null);
+
+  const isSubmittingComment = fetcher.state === "submitting" ||
+    fetcher.state === "loading";
+
+  useEffect(() => {
+    if (fetcher.data?.errorMessage) {
+      toast({
+        title: fetcher.data?.errorMessage,
+        status: "error",
+        isClosable: true,
+      });
+    }
+  }, [fetcher.data, toast]);
+
+  useEffect(() => {
+    if (isSubmittingComment && commentRef.current) {
+      commentRef.current.value = "";
+    }
+  }, [isSubmittingComment]);
 
   const imageUrls = useMemo(() => {
     return imageIds
@@ -59,18 +87,40 @@ export function PostCard (props: Props) {
         likedByCurrentUser={likedByCurrentUser}
       />
       <CardBody p={2}>
-        <VStack align="stretch" spacing={4}>
+        <VStack align="stretch" spacing={2}>
           {description && (
             <Text
               fontSize="sm"
-              color={colorMode === "light" ? "blackAlpha.800" : "whiteAlpha.800"}
+              color={colorMode === "light" ? "blackAlpha.700" : "whiteAlpha.700"}
             >
               {description}
             </Text>
           )}
-          <ChakraLink as={Link} to={AppLinks.Post(postId)} fontSize="sm">
-            View All {numComments} Comment(s)
-          </ChakraLink>
+          {lastComments.length && (
+            <VStack align="stretch" spacing={1}>
+              {fetcher.submission && (
+                <Text fontSize="sm">
+                  <b>{currentUserFullName}</b> {fetcher.submission.formData.get("content")?.toString().substring(0, 40)}
+                </Text>
+              )}
+              {(isSubmittingComment ? lastComments.slice(0, -1) : lastComments)
+                .map(comment => (
+                  <Text key={comment.id} fontSize="sm">
+                    <b>{comment.userFullName}</b> {comment.content.substring(0, 40)}
+                  </Text>
+                ))}
+            </VStack>
+          )}
+          {numComments > 2 && (
+            <ChakraLink
+              as={Link}
+              to={AppLinks.Post(postId)}
+              fontSize="sm"
+              color={colorMode === "light" ? "blackAlpha.700" : "whiteAlpha.700"}
+            >
+              View All {isSubmittingComment ? numComments + 1 : numComments} Comment(s)
+            </ChakraLink>
+          )}
           <Text fontSize="sm">
             {dayjs(createdAt).fromNow()}
           </Text>
@@ -78,7 +128,13 @@ export function PostCard (props: Props) {
       </CardBody>
       <Divider />
       {currentUserId && (
-        <CommentOnPost postId={postId} />
+        <fetcher.Form method="post">
+          <CommentOnPost
+            postId={postId}
+            isSubmitting={isSubmittingComment}
+            commentRef={commentRef}
+          />
+        </fetcher.Form>
       )}
     </CustomCard>
   )
