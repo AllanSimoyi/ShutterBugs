@@ -1,14 +1,16 @@
 import { SimpleGrid, VStack } from "@chakra-ui/react";
 import type { LinksFunction, LoaderArgs } from "@remix-run/node";
-import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
+import type { ActionArgs } from "@remix-run/server-runtime";
+import { json } from "@remix-run/server-runtime";
 import carouselUrl from 'react-gallery-carousel/dist/index.css';
-import { Footer, StatusCode } from "remix-chakra-reusables";
-import { FeedCenteredView } from "~/components/CustomComponents";
+import { CenteredView, Footer, getRawFormFields, StatusCode } from "remix-chakra-reusables";
 import { PostCard } from "~/components/PostCard";
 import { Toolbar } from "~/components/Toolbar";
 import { prisma } from "~/db.server";
 import { PRODUCT_NAME } from "~/lib/constants";
+import { flattenFieldErrors, FormActionIdentifier, FormActionSchema, PostCommentSchema, ToggleCommentLikeSchema, TogglePostLikeSchema } from "~/lib/forms.validations";
+import { getUserId, requireUserId } from "~/session.server";
 import { useOptionalUser } from "~/utils";
 
 export let links: LinksFunction = () => {
@@ -17,13 +19,11 @@ export let links: LinksFunction = () => {
   ]
 }
 
-export async function loader (_: LoaderArgs) {
-  const developerLink = process.env.DEVELOPER_WEBSITE_LINK;
-  if (!developerLink) {
-    throw new Response("Developer website link is missing", { status: StatusCode.NotFound });
-  }
+const ITEMS_PER_PAGE = 40;
 
-  const posts = await prisma.post.findMany({
+function fetchPosts () {
+  return prisma.post.findMany({
+    take: ITEMS_PER_PAGE,
     select: {
       id: true,
       user: {
@@ -35,6 +35,7 @@ export async function loader (_: LoaderArgs) {
       _count: {
         select: {
           likes: true,
+          comments: true,
         }
       },
       description: true,
@@ -46,8 +47,184 @@ export async function loader (_: LoaderArgs) {
       createdAt: true,
     }
   });
+}
+function fetchPostLikes (postIds: string[], currentUserId: string | undefined) {
+  return prisma.postLike.findMany({
+    select: {
+      postId: true,
+    },
+    where: {
+      postId: {
+        in: postIds,
+      },
+      userId: currentUserId,
+    }
+  });
+}
+function getDeveloperLink () {
+  const developerLink = process.env.DEVELOPER_WEBSITE_LINK;
+  if (!developerLink) {
+    throw new Response("Developer website link is missing", { status: StatusCode.NotFound });
+  }
+  return developerLink;
+}
+async function refreshPageData (currentUserId: string | undefined) {
+  const posts = await fetchPosts();
+  const postLikes = await fetchPostLikes(posts.map(post => post.id), currentUserId);
 
-  return json({ developerLink, posts });
+  const contextualizedPosts = posts.map(post => {
+    const likedByCurrentUser = Boolean(currentUserId) &&
+      postLikes.some(postLike => postLike.postId === post.id);
+    return {
+      ...post,
+      likedByCurrentUser,
+    }
+  });
+
+  return {
+    developerLink: getDeveloperLink(),
+    posts: contextualizedPosts,
+  }
+}
+
+export async function loader ({ request }: LoaderArgs) {
+  const currentUserId = await getUserId(request);
+  const data = await refreshPageData(currentUserId);
+  return json(data);
+}
+
+interface FlattenErrorsProps {
+  fieldErrors: {
+    [x: string]: string[] | undefined;
+  },
+  formErrors: string[]
+}
+function flattenErrors (props: FlattenErrorsProps) {
+  const { fieldErrors, formErrors } = props;
+
+  const flattenedFieldErrors = fieldErrors ?
+    flattenFieldErrors(fieldErrors) :
+    "";
+  const flattenedFormErrors = formErrors.join(", ");
+
+  return [flattenedFieldErrors, flattenedFormErrors]
+    .filter(el => el)
+    .join(", ");
+}
+
+async function handlePostComment (fields: any, currentUserId: string) {
+  const result = await PostCommentSchema.safeParseAsync(fields);
+  if (!result.success) {
+    const { fieldErrors, formErrors } = result.error.flatten();
+    const errorMessage = flattenErrors({ fieldErrors, formErrors });
+    return json({ errorMessage });
+  }
+  const { postId, content } = result.data;
+
+  await prisma.comment.create({
+    data: {
+      postId,
+      userId: currentUserId,
+      content,
+    }
+  });
+  return json({ errorMessage: "" });
+}
+
+async function handleTogglePostLike (fields: any, currentUserId: string) {
+  const result = await TogglePostLikeSchema.safeParseAsync(fields);
+  if (!result.success) {
+    const { fieldErrors, formErrors } = result.error.flatten();
+    const errorMessage = flattenErrors({ fieldErrors, formErrors });
+    return json({ errorMessage });
+  }
+  const { postId } = result.data;
+
+  const currentUserLikes = await prisma.postLike.findMany({
+    where: {
+      postId,
+      userId: currentUserId,
+    }
+  });
+  if (currentUserLikes.length) {
+    await Promise.all(
+      currentUserLikes.map(currentUserLike => {
+        return prisma.postLike.delete({
+          where: {
+            id: currentUserLike.id,
+          }
+        });
+      })
+    );
+  } else {
+    await prisma.postLike.create({
+      data: {
+        postId,
+        userId: currentUserId,
+      }
+    });
+  }
+  return json({ errorMessage: "" });
+}
+
+async function handleToggleCommentLike (fields: any, currentUserId: string) {
+  const result = await ToggleCommentLikeSchema.safeParseAsync(fields);
+  if (!result.success) {
+    const { fieldErrors, formErrors } = result.error.flatten();
+    const errorMessage = flattenErrors({ fieldErrors, formErrors });
+    return json({ errorMessage });
+  }
+  const { postId } = result.data;
+
+  const currentUserCommentLikes = await prisma.commentLike.findMany({
+    where: {
+      postId,
+      userId: currentUserId,
+    }
+  });
+  if (currentUserCommentLikes.length) {
+    await Promise.all(
+      currentUserCommentLikes.map(currentUserCommentLike => {
+        return prisma.commentLike.delete({
+          where: {
+            id: currentUserCommentLike.id,
+          }
+        });
+      })
+    );
+  } else {
+    await prisma.commentLike.create({
+      data: {
+        postId,
+        userId: currentUserId,
+      }
+    });
+  }
+  return json({ errorMessage: "" });
+}
+
+export async function action ({ request }: ActionArgs) {
+  const currentUserId = await requireUserId(request);
+  const fields = await getRawFormFields(request);
+
+  const result = await FormActionSchema.safeParseAsync(fields);
+  if (!result.success) {
+    const { fieldErrors, formErrors } = result.error.flatten();
+    const errorMessage = flattenErrors({ fieldErrors, formErrors });
+    return json({ errorMessage });
+  }
+  const { _action } = result.data;
+
+  if (_action === FormActionIdentifier.Comment) {
+    return handlePostComment(fields, currentUserId);
+  }
+  if (_action === FormActionIdentifier.TogglePostLike) {
+    return handleTogglePostLike(fields, currentUserId);
+  }
+  if (_action === FormActionIdentifier.ToggleCommentLike) {
+    return handleToggleCommentLike(fields, currentUserId);
+  }
+  return json({ errorMessage: "Invalid form action provided" });
 }
 
 export default function Index () {
@@ -58,8 +235,8 @@ export default function Index () {
     <VStack align="stretch" minH="100vh">
       <Toolbar currentUserName={user?.fullName || ""} />
       <VStack align="stretch" flexGrow={1} py={8}>
-        <FeedCenteredView px={4}>
-          <SimpleGrid columns={{ sm: 1, md: 1, lg: 1 }} spacing={6}>
+        <CenteredView px={4}>
+          <SimpleGrid columns={{ sm: 1, md: 1, lg: 2 }} spacing={12}>
             {posts.map((post) => (
               <VStack align="stretch" key={post.id}>
                 <PostCard
@@ -68,6 +245,8 @@ export default function Index () {
                   userImageId={post.user.picId}
                   userFullName={post.user.fullName}
                   numLikes={post._count.likes}
+                  likedByCurrentUser={post.likedByCurrentUser}
+                  numComments={post._count.comments}
                   description={post.description}
                   imageIds={post.images.map(image => image.imageId)}
                   createdAt={new Date(post.createdAt)}
@@ -75,7 +254,7 @@ export default function Index () {
               </VStack>
             ))}
           </SimpleGrid>
-        </FeedCenteredView>
+        </CenteredView>
       </VStack>
       <Footer
         appTitle={PRODUCT_NAME}
