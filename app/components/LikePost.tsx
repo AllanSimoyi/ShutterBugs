@@ -32,10 +32,14 @@ export function LikePost (props: Props) {
       <IconButton
         type="submit"
         variant="ghost"
-        color={effectiveState ? "red.400" : undefined}
-        style={{ fill: effectiveState ? "red" : undefined }}
+        color={effectiveState ? "red.500" : undefined}
         aria-label='Like post'
-        icon={<Heart size={30} />}
+        icon={(
+          <Heart
+            size={30}
+            style={{ fill: effectiveState ? "#E53E3E" : undefined }}
+          />
+        )}
       />
     </fetcher.Form>
   )
