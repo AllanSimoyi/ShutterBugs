@@ -1,5 +1,4 @@
 import { IconButton } from "@chakra-ui/react";
-import { useFetcher } from "@remix-run/react";
 import { Heart } from "tabler-icons-react";
 import { FormActionIdentifier, FormActionName } from "~/lib/forms.validations";
 
@@ -10,15 +9,9 @@ interface Props {
 
 export function LikePost (props: Props) {
   const { postId, likedByCurrentUser } = props;
-  const fetcher = useFetcher();
-
-  const isLiking = fetcher.state === "submitting" ||
-    fetcher.state === "loading";
-
-  const effectiveState = isLiking ? !likedByCurrentUser : likedByCurrentUser;
 
   return (
-    <fetcher.Form method="post">
+    <>
       <input
         type="hidden"
         name={FormActionName}
@@ -32,15 +25,15 @@ export function LikePost (props: Props) {
       <IconButton
         type="submit"
         variant="ghost"
-        color={effectiveState ? "red.500" : undefined}
+        color={likedByCurrentUser ? "red.500" : undefined}
         aria-label='Like post'
         icon={(
           <Heart
             size={30}
-            style={{ fill: effectiveState ? "#E53E3E" : undefined }}
+            style={{ fill: likedByCurrentUser ? "#E53E3E" : undefined }}
           />
         )}
       />
-    </fetcher.Form>
+    </>
   )
 }

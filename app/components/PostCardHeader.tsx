@@ -1,5 +1,5 @@
 import { ButtonGroup, CardHeader, HStack, IconButton, Spacer } from "@chakra-ui/react";
-import { Link } from "@remix-run/react";
+import { Link, useFetcher } from "@remix-run/react";
 import 'react-gallery-carousel/dist/index.css';
 import { MessageCircle2 } from "tabler-icons-react";
 import { AppLinks } from "~/lib/links";
@@ -13,12 +13,26 @@ interface Props extends UserPicHeaderProps {
 }
 
 export function PostCardHeader (props: Props) {
-  const { postId, likedByCurrentUser, ...userPicHeaderProps } = props;
+  const { postId, likedByCurrentUser, numLikes, ...otherUserPicHeaderProps } = props;
+
+  const fetcher = useFetcher();
+
+  const isTogglingLike = fetcher.state === "submitting" ||
+    fetcher.state === "loading";
+
+  const effectiveNumLikes = isTogglingLike ?
+    likedByCurrentUser ?
+      numLikes - 1 :
+      numLikes + 1 :
+    numLikes;
 
   return (
     <CardHeader p={2}>
       <HStack align="center">
-        <UserPicHeader {...userPicHeaderProps} />
+        <UserPicHeader
+          {...otherUserPicHeaderProps}
+          numLikes={effectiveNumLikes}
+        />
         <Spacer />
         <ButtonGroup>
           <IconButton
@@ -28,10 +42,14 @@ export function PostCardHeader (props: Props) {
             aria-label='Comment on post'
             icon={<MessageCircle2 size={30} />}
           />
-          <LikePost
-            postId={postId}
-            likedByCurrentUser={likedByCurrentUser}
-          />
+          <fetcher.Form method="post">
+            <LikePost
+              postId={postId}
+              likedByCurrentUser={isTogglingLike ?
+                !likedByCurrentUser :
+                likedByCurrentUser}
+            />
+          </fetcher.Form>
         </ButtonGroup>
       </HStack>
     </CardHeader>
