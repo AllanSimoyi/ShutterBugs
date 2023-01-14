@@ -1,4 +1,4 @@
-// root.tsx
+import { Cloudinary } from "@cloudinary/url-gen";
 import { ChakraProvider, cookieStorageManagerSSR, localStorageManager, useColorMode, VStack } from '@chakra-ui/react';
 import { withEmotionCache } from '@emotion/react';
 import type { LinksFunction, LoaderArgs, MetaFunction } from '@remix-run/node';
@@ -12,11 +12,12 @@ import {
   ScrollRestoration,
   useLoaderData
 } from '@remix-run/react';
-import React, { useContext, useEffect } from 'react';
-import { CloudinaryContextProvider, RootBoundaryError } from 'remix-chakra-reusables';
+import React, { useContext, useEffect, useMemo } from 'react';
+import { CloudinaryContextProvider } from 'remix-chakra-reusables';
+import { CustomRootBoundaryError } from './components/CustomComponents';
 import { ClientStyleContext, ServerStyleContext } from './context';
 import { PRODUCT_NAME } from './lib/constants';
-import { AppLinks } from './lib/links';
+import { getUser } from './session.server';
 import customStylesUrl from "./styles/custom.css";
 import tailwindStylesheetUrl from "./styles/tailwind.css";
 import theme from './theme';
@@ -97,14 +98,14 @@ const Document = withEmotionCache(
 );
 
 export async function loader ({ request }: LoaderArgs) {
-  // const user = await getUser(request);
+  const user = await getUser(request);
 
   const CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME || "";
   const UPLOAD_RESET = process.env.CLOUDINARY_UPLOAD_RESET || "";
 
   const cookies = request.headers.get("cookie") ?? '';
 
-  return json({ CLOUD_NAME, UPLOAD_RESET, cookies });
+  return json({ user, CLOUD_NAME, UPLOAD_RESET, cookies });
 }
 
 function Bg ({ children }: { children: React.ReactNode; }) {
@@ -123,17 +124,27 @@ function Bg ({ children }: { children: React.ReactNode; }) {
 export default function App () {
   const { CLOUD_NAME, UPLOAD_RESET, cookies } = useLoaderData<typeof loader>();
 
+  const CloudinaryUtil = useMemo(() => {
+    return new Cloudinary({
+      cloud: {
+        cloudName: CLOUD_NAME,
+      }
+    });
+  }, [CLOUD_NAME]);
+
   return (
     <Document>
       <ChakraProvider
         theme={theme}
-        colorModeManager={
-          typeof cookies === 'string'
-            ? cookieStorageManagerSSR(cookies)
-            : localStorageManager
-        }
+        colorModeManager={typeof cookies === 'string'
+          ? cookieStorageManagerSSR(cookies)
+          : localStorageManager}
       >
-        <CloudinaryContextProvider CLOUDINARY_CLOUD_NAME={CLOUD_NAME} CLOUDINARY_UPLOAD_RESET={UPLOAD_RESET}>
+        <CloudinaryContextProvider
+          CLOUDINARY_CLOUD_NAME={CLOUD_NAME}
+          CLOUDINARY_UPLOAD_RESET={UPLOAD_RESET}
+          CloudinaryUtil={CloudinaryUtil}
+        >
           <Bg>
             <Outlet />
           </Bg>
@@ -147,17 +158,12 @@ export function ErrorBoundary ({ error }: { error: Error }) {
   return (
     <html>
       <head>
-        <title>
-          Oh no!
-        </title>
+        <title>Oh no!</title>
         <Meta />
         <Links />
       </head>
       <body>
-        <RootBoundaryError
-          error={error}
-          customerCareLink={AppLinks.CustomerCare}
-        />
+        <CustomRootBoundaryError error={error} />
         <Scripts />
       </body>
     </html>
