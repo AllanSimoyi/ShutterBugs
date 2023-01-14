@@ -1,5 +1,6 @@
-import { ButtonGroup, CardHeader, HStack, IconButton, Spacer } from "@chakra-ui/react";
+import { ButtonGroup, CardHeader, HStack, IconButton, Spacer, useToast } from "@chakra-ui/react";
 import { Link, useFetcher } from "@remix-run/react";
+import { useEffect } from "react";
 import 'react-gallery-carousel/dist/index.css';
 import { MessageCircle2 } from "tabler-icons-react";
 import { AppLinks } from "~/lib/links";
@@ -16,6 +17,17 @@ export function PostCardHeader (props: Props) {
   const { postId, likedByCurrentUser, numLikes, ...otherUserPicHeaderProps } = props;
 
   const fetcher = useFetcher();
+  const toast = useToast();
+
+  useEffect(() => {
+    if (fetcher.data?.errorMessage) {
+      toast({
+        title: fetcher.data.errorMessage,
+        status: "error",
+        isClosable: true,
+      });
+    }
+  }, [fetcher.data, toast]);
 
   const isTogglingLike = fetcher.state === "submitting" ||
     fetcher.state === "loading";
