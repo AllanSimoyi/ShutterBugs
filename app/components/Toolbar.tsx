@@ -1,4 +1,4 @@
-import { Hide, HStack, Input, Show, Spacer, Stack, Text, useColorMode, VStack } from '@chakra-ui/react';
+import { ButtonGroup, Hide, HStack, Input, Show, Spacer, Stack, Text, useColorMode, VStack } from '@chakra-ui/react';
 import { AppTitle, CenteredView, ToggleColorMode, ToolbarNavItem } from 'remix-chakra-reusables';
 import { Search } from 'tabler-icons-react';
 import { PRODUCT_NAME } from '~/lib/constants';
@@ -58,20 +58,29 @@ export function Toolbar (props: ToolbarProps) {
               placeholder='Search'
               borderRadius={30}
               fontSize="sm"
+              flexGrow={1}
               px={1}
-              w="100%"
             />
           </HStack>
           <Spacer />
           <Show above="lg">
             {!currentUserName && (
-              <ToolbarNavItem
-                navItem={{
-                  text: "Create Account",
-                  href: "/join",
-                  primary: true,
-                }}
-              />
+              <ButtonGroup>
+                <ToolbarNavItem
+                  navItem={{
+                    text: "Create Account",
+                    href: "/join",
+                    primary: true,
+                  }}
+                />
+                <ToolbarNavItem
+                  navItem={{
+                    text: "Login",
+                    href: "/login",
+                    primary: false,
+                  }}
+                />
+              </ButtonGroup>
             )}
             {currentUserName && (
               <Text fontSize="sm" title={currentUserName}>
