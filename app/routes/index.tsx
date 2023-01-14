@@ -32,6 +32,21 @@ function fetchPosts () {
           fullName: true
         },
       },
+      comments: {
+        take: 2,
+        orderBy: {
+          createdAt: "desc",
+        },
+        select: {
+          id: true,
+          user: {
+            select: {
+              fullName: true,
+            }
+          },
+          content: true,
+        }
+      },
       _count: {
         select: {
           likes: true,
@@ -241,11 +256,17 @@ export default function Index () {
               <VStack align="stretch" key={post.id}>
                 <PostCard
                   currentUserId={user?.id}
+                  currentUserFullName={user?.fullName}
                   postId={post.id}
                   userImageId={post.user.picId}
                   userFullName={post.user.fullName}
                   numLikes={post._count.likes}
                   likedByCurrentUser={post.likedByCurrentUser}
+                  lastComments={post.comments.map(comment => ({
+                    id: comment.id,
+                    userFullName: comment.user.fullName,
+                    content: comment.content,
+                  }))}
                   numComments={post._count.comments}
                   description={post.description}
                   imageIds={post.images.map(image => image.imageId)}
