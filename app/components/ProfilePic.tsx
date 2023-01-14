@@ -1,6 +1,7 @@
-import { Avatar, VStack } from "@chakra-ui/react";
-import { AdvancedImage, placeholder } from "@cloudinary/react";
-import { cloudinaryImages, useCloudinary } from "remix-chakra-reusables";
+import { Avatar, Img, VStack } from "@chakra-ui/react";
+import { thumbnail } from "@cloudinary/url-gen/actions/resize";
+import { useMemo } from "react";
+import { Cld } from "~/lib/cloudinary";
 
 interface Props {
   imageId: string;
@@ -9,25 +10,25 @@ interface Props {
 
 export function ProfilePic (props: Props) {
   const { imageId, fullName } = props;
-  const { CLOUDINARY_CLOUD_NAME } = useCloudinary();
+
+  const imageSrc = useMemo(() => {
+    return Cld
+      .image(imageId)
+      .resize(thumbnail().width(60).height(60))
+      .format('auto')
+      .quality('auto')
+      .toURL()
+  }, [imageId]);
 
   return (
     <VStack align="stretch">
       {imageId && (
-        <VStack
-          justify="center"
-          align="center"
-          borderRadius="50%"
-          overflow="hidden"
-          maxH="40px"
-          maxW="40px"
-          p={0}
-          >
-          <AdvancedImage
-            cldImg={cloudinaryImages(CLOUDINARY_CLOUD_NAME).getUploadThumbnail(imageId, 60, 60)}
-            plugins={[placeholder({ mode: 'blur' })]}
-          />
-        </VStack>
+        <Img
+          src={imageSrc}
+          width="60px"
+          height="60px"
+          borderRadius='full'
+        />
       )}
       {!imageId && (
         <Avatar
