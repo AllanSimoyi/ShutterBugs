@@ -26,8 +26,8 @@ export function ProfilePic (props: Props) {
       {imageId && (
         <Img
           src={imageSrc}
-          width="60px"
-          height="60px"
+          width="40px"
+          height="40px"
           borderRadius='full'
         />
       )}
