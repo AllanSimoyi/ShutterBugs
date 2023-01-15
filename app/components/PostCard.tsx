@@ -1,18 +1,14 @@
 import { CardBody, Divider, Link as ChakraLink, Text, useColorMode, useToast, VStack } from "@chakra-ui/react";
 import { byRadius } from "@cloudinary/url-gen/actions/roundCorners";
 import { Link, useFetcher } from "@remix-run/react";
-import dayjs from "dayjs";
-import relativeTime from "dayjs/plugin/relativeTime";
 import { useEffect, useMemo, useRef } from "react";
 import 'react-gallery-carousel/dist/index.css';
 import { useCloudinary } from "remix-chakra-reusables";
 import { AppLinks } from "~/lib/links";
-import { CommentOnPost } from "./CommentonPost";
+import { CommentOnPost } from "./CommentOnPost";
 import { CustomCard } from "./CustomComponents";
 import { ImageCarousel } from "./ImageCarousel";
 import { PostCardHeader } from "./PostCardHeader";
-
-dayjs.extend(relativeTime);
 
 interface Props {
   currentUserId: string | undefined;
@@ -30,7 +26,7 @@ interface Props {
   numComments: number;
   description: string;
   imageIds: string[];
-  createdAt: Date;
+  createdAt: string;
 }
 
 export function PostCard (props: Props) {
@@ -78,7 +74,7 @@ export function PostCard (props: Props) {
 
   return (
     <CustomCard borderRadius={10} overflow="hidden">
-      <ImageCarousel imageUrls={imageUrls} />
+      <ImageCarousel imageUrls={imageUrls} maxH="70vh" />
       <PostCardHeader
         userImageId={userImageId}
         userFullName={userFullName}
@@ -122,7 +118,7 @@ export function PostCard (props: Props) {
             </ChakraLink>
           )}
           <Text fontSize="sm">
-            {dayjs(createdAt).fromNow()}
+            {createdAt}
           </Text>
         </VStack>
       </CardBody>
