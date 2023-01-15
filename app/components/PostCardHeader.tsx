@@ -1,4 +1,4 @@
-import { ButtonGroup, CardHeader, HStack, IconButton, Spacer, useToast } from "@chakra-ui/react";
+import { ButtonGroup, HStack, IconButton, Spacer, useToast } from "@chakra-ui/react";
 import { Link, useFetcher } from "@remix-run/react";
 import { useEffect } from "react";
 import 'react-gallery-carousel/dist/index.css';
@@ -11,10 +11,11 @@ import { UserPicHeader } from "./UserPicHeader";
 interface Props extends UserPicHeaderProps {
   postId: string;
   likedByCurrentUser: boolean;
+  p?: number;
 }
 
 export function PostCardHeader (props: Props) {
-  const { postId, likedByCurrentUser, numLikes, ...otherUserPicHeaderProps } = props;
+  const { postId, likedByCurrentUser, numLikes, p, ...otherUserPicHeaderProps } = props;
 
   const fetcher = useFetcher();
   const toast = useToast();
@@ -39,31 +40,29 @@ export function PostCardHeader (props: Props) {
     numLikes;
 
   return (
-    <CardHeader p={2}>
-      <HStack align="center">
-        <UserPicHeader
-          {...otherUserPicHeaderProps}
-          numLikes={effectiveNumLikes}
+    <HStack align="center" p={p || 2}>
+      <UserPicHeader
+        {...otherUserPicHeaderProps}
+        numLikes={effectiveNumLikes}
+      />
+      <Spacer />
+      <ButtonGroup>
+        <IconButton
+          as={Link}
+          to={AppLinks.Post(postId)}
+          variant="ghost"
+          aria-label='Comment on post'
+          icon={<MessageCircle2 size={30} />}
         />
-        <Spacer />
-        <ButtonGroup>
-          <IconButton
-            as={Link}
-            to={AppLinks.Post(postId)}
-            variant="ghost"
-            aria-label='Comment on post'
-            icon={<MessageCircle2 size={30} />}
+        <fetcher.Form method="post">
+          <LikePost
+            postId={postId}
+            likedByCurrentUser={isTogglingLike ?
+              !likedByCurrentUser :
+              likedByCurrentUser}
           />
-          <fetcher.Form method="post">
-            <LikePost
-              postId={postId}
-              likedByCurrentUser={isTogglingLike ?
-                !likedByCurrentUser :
-                likedByCurrentUser}
-            />
-          </fetcher.Form>
-        </ButtonGroup>
-      </HStack>
-    </CardHeader>
+        </fetcher.Form>
+      </ButtonGroup>
+    </HStack>
   )
 }
