@@ -1,4 +1,5 @@
 import { HStack, Text, VStack } from "@chakra-ui/react";
+import { NumLikes } from "./NumLikes";
 import { ProfilePic } from "./ProfilePic";
 
 export interface UserPicHeaderProps {
@@ -21,7 +22,9 @@ export function UserPicHeader (props: UserPicHeaderProps) {
           {userFullName}
         </Text>
         <Text fontSize="sm">
-          <b>{numLikes}</b> {numLikes === 1 ? "like" : "likes"}
+          <NumLikes>
+            {numLikes}
+          </NumLikes>
         </Text>
       </VStack>
     </HStack>
