@@ -7,10 +7,11 @@ interface Props {
   imageUrls: {
     src: string;
   }[]
+  maxH?: number | string;
 }
 
 export function ImageCarousel (props: Props) {
-  const { imageUrls } = props;
+  const { imageUrls, maxH } = props;
 
   return (
     <Carousel
@@ -42,7 +43,7 @@ export function ImageCarousel (props: Props) {
           m={2}
         />
       )}
-      style={{ flexGrow: 1, maxHeight: "400px" }}
+      style={maxH ? { flexGrow: 1, maxHeight: maxH } : undefined}
     />
   )
 }
