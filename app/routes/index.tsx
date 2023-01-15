@@ -1,3 +1,4 @@
+import dayjs from "dayjs";
 import { SimpleGrid, VStack } from "@chakra-ui/react";
 import type { LinksFunction, LoaderArgs } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
@@ -12,6 +13,9 @@ import { PRODUCT_NAME } from "~/lib/constants";
 import { flattenFieldErrors, FormActionIdentifier, FormActionSchema, PostCommentSchema, ToggleCommentLikeSchema, TogglePostLikeSchema } from "~/lib/forms.validations";
 import { getUserId, requireUserId } from "~/session.server";
 import { useOptionalUser } from "~/utils";
+import relativeTime from "dayjs/plugin/relativeTime";
+
+dayjs.extend(relativeTime);
 
 export let links: LinksFunction = () => {
   return [
@@ -90,6 +94,7 @@ async function refreshPageData (currentUserId: string | undefined) {
     likedByCurrentUser: currentUserId ?
       post.likes.length > 0 :
       false,
+    createdAt: dayjs(post.createdAt).fromNow(),
   }));
 
   return {
@@ -185,11 +190,11 @@ async function handleToggleCommentLike (fields: any, currentUserId: string) {
     const errorMessage = flattenErrors({ fieldErrors, formErrors });
     return json({ errorMessage });
   }
-  const { postId } = result.data;
+  const { commentId } = result.data;
 
   const currentUserCommentLikes = await prisma.commentLike.findMany({
     where: {
-      postId,
+      commentId,
       userId: currentUserId,
     }
   });
@@ -206,7 +211,7 @@ async function handleToggleCommentLike (fields: any, currentUserId: string) {
   } else {
     await prisma.commentLike.create({
       data: {
-        postId,
+        commentId,
         userId: currentUserId,
       }
     });
@@ -266,7 +271,7 @@ export default function Index () {
                   numComments={post._count.comments}
                   description={post.description}
                   imageIds={post.images.map(image => image.imageId)}
-                  createdAt={new Date(post.createdAt)}
+                  createdAt={post.createdAt}
                 />
               </VStack>
             ))}
