@@ -96,17 +96,30 @@ async function seed () {
 
   const posts = await prisma.post.findMany({
     select: {
-      id: true,
-      userId: true,
+      comments: {
+        select: {
+          id: true,
+        }
+      }
     }
   });
 
-  await posts.reduce(async (acc, post) => {
+  const commentIds = posts
+    .map(post => post.comments)
+    .map(comments => comments.map(comment => comment.id))
+    .reduce((acc, commentIds) => {
+      return [
+        ...acc,
+        ...commentIds
+      ]
+    }, []);
+
+  await commentIds.reduce(async (acc, commentId) => {
     await acc;
     await prisma.commentLike.create({
       data: {
-        postId: post.id,
-        userId: post.userId === Allan.id ? Kudzie.id : Allan.id,
+        commentId: commentId,
+        userId: Kudzie.id,
       }
     });
   }, Promise.resolve());
