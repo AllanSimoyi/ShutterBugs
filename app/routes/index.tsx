@@ -21,7 +21,7 @@ export let links: LinksFunction = () => {
 
 const ITEMS_PER_PAGE = 40;
 
-function fetchPosts () {
+function fetchPosts (currentUserId: string | undefined) {
   return prisma.post.findMany({
     take: ITEMS_PER_PAGE,
     select: {
@@ -31,6 +31,15 @@ function fetchPosts () {
           picId: true,
           fullName: true
         },
+      },
+      likes: {
+        take: 1,
+        where: {
+          userId: currentUserId,
+        },
+        select: {
+          id: true,
+        }
       },
       comments: {
         take: 2,
@@ -60,20 +69,10 @@ function fetchPosts () {
         }
       },
       createdAt: true,
-    }
-  });
-}
-function fetchPostLikes (postIds: string[], currentUserId: string | undefined) {
-  return prisma.postLike.findMany({
-    select: {
-      postId: true,
     },
-    where: {
-      postId: {
-        in: postIds,
-      },
-      userId: currentUserId,
-    }
+    orderBy: {
+      createdAt: "desc",
+    },
   });
 }
 function getDeveloperLink () {
@@ -84,17 +83,14 @@ function getDeveloperLink () {
   return developerLink;
 }
 async function refreshPageData (currentUserId: string | undefined) {
-  const posts = await fetchPosts();
-  const postLikes = await fetchPostLikes(posts.map(post => post.id), currentUserId);
+  const posts = await fetchPosts(currentUserId);
 
-  const contextualizedPosts = posts.map(post => {
-    const likedByCurrentUser = Boolean(currentUserId) &&
-      postLikes.some(postLike => postLike.postId === post.id);
-    return {
-      ...post,
-      likedByCurrentUser,
-    }
-  });
+  const contextualizedPosts = posts.map(post => ({
+    ...post,
+    likedByCurrentUser: currentUserId ?
+      post.likes.length > 0 :
+      false,
+  }));
 
   return {
     developerLink: getDeveloperLink(),
