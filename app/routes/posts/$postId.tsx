@@ -1,10 +1,10 @@
-import carouselUrl from 'react-gallery-carousel/dist/index.css';
-import { HStack, VStack } from "@chakra-ui/react";
+import { VStack } from "@chakra-ui/react";
 import type { LinksFunction, LoaderArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
+import carouselUrl from 'react-gallery-carousel/dist/index.css';
 import { CenteredView, Footer, RecordIdSchema, StatusCode } from "remix-chakra-reusables";
 import { ExpandedPostCard } from "~/components/ExpandedPostCard";
 import { Toolbar } from "~/components/Toolbar";
