@@ -1,7 +1,9 @@
 import { HStack, Input, Spacer, Stack, Text, useColorMode, VStack } from '@chakra-ui/react';
+import { Link } from '@remix-run/react';
 import { AppTitle, CenteredView, ToggleColorMode } from 'remix-chakra-reusables';
 import { Search } from 'tabler-icons-react';
 import { PRODUCT_NAME } from '~/lib/constants';
+import { AppLinks } from '~/lib/links';
 import { DropDownMenu } from './DropDownMenu';
 
 export interface ToolbarProps {
@@ -34,7 +36,9 @@ export function Toolbar (props: ToolbarProps) {
           direction={{ base: "column", lg: "row" }}
         >
           <HStack align="center" w={{ md: "60%", lg: "20%" }}>
-            <AppTitle title={PRODUCT_NAME} />
+            <Link to={AppLinks.Home}>
+              <AppTitle title={PRODUCT_NAME} />
+            </Link>
             <Spacer />
             <HStack justify="flex-end" display={{ lg: "none" }} spacing={4}>
               <ToggleColorMode variant="ghost" aria-label="Toggle Dark Mode" />
