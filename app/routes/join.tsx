@@ -1,8 +1,8 @@
-import { Button, CardBody, CardFooter, CardHeader, Center, Heading, HStack, Spacer, VStack } from "@chakra-ui/react";
+import { Link as ChakraLink, Button, CardBody, CardFooter, CardHeader, Center, Heading, HStack, Spacer, VStack } from "@chakra-ui/react";
 import type { ActionArgs, LoaderArgs, MetaFunction } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { Form, Link, useActionData, useTransition } from "@remix-run/react";
-import type { CustomActionData} from "remix-chakra-reusables";
+import type { CustomActionData } from "remix-chakra-reusables";
 import { ActionContextProvider, badRequest, CustomAlert, FullNameSchema, getRawFormFields, PrimaryButton, processBadRequest, TextField, ToggleColorMode } from "remix-chakra-reusables";
 import { z } from "zod";
 import { CustomCard, CustomCatchBoundary, CustomErrorBoundary } from "~/components/CustomComponents";
@@ -75,6 +75,9 @@ export default function CreateAccount () {
   return (
     <VStack align="stretch" minH="100vh">
       <HStack p={4}>
+        <ChakraLink as={Link} to={AppLinks.Home} fontSize="md" fontWeight="bold">
+          To Home Page
+        </ChakraLink>
         <Spacer />
         <ToggleColorMode aria-label="Toggle Dark Mode" />
       </HStack>

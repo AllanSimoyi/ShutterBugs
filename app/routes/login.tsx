@@ -1,4 +1,4 @@
-import { Button, CardBody, CardFooter, CardHeader, Center, Heading, HStack, Spacer, useToast, VStack } from "@chakra-ui/react";
+import { Link as ChakraLink, Button, CardBody, CardFooter, CardHeader, Center, Heading, HStack, Spacer, useToast, VStack } from "@chakra-ui/react";
 import type { ActionArgs, LoaderArgs, MetaFunction } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { Form, Link, useActionData, useLoaderData, useSearchParams, useTransition } from "@remix-run/react";
@@ -88,6 +88,9 @@ export default function LoginPage () {
   return (
     <VStack align="stretch" minH="100vh">
       <HStack p={4}>
+        <ChakraLink as={Link} to={AppLinks.Home} fontSize="md" fontWeight="bold">
+          To Home Page
+        </ChakraLink>
         <Spacer />
         <ToggleColorMode aria-label="Toggle Dark Mode" />
       </HStack>
