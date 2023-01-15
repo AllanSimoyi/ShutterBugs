@@ -250,8 +250,8 @@ export default function Index () {
     <VStack align="stretch" minH="100vh">
       <Toolbar currentUserName={user?.fullName || ""} />
       <VStack align="stretch" flexGrow={1} py={8}>
-        <CenteredView px={4}>
-          <SimpleGrid columns={{ sm: 1, md: 1, lg: 2 }} spacing={12}>
+        <CenteredView w={{ base: "100%", md: "60%", lg: "40%" }} px={4}>
+          <SimpleGrid columns={{ sm: 1, md: 1, lg: 1 }} spacing={12}>
             {posts.map((post) => (
               <VStack align="stretch" key={post.id}>
                 <PostCard
