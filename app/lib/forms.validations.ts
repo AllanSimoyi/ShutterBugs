@@ -29,7 +29,7 @@ export const TogglePostLikeSchema = z.object({
   postId: RecordIdSchema,
 });
 export const ToggleCommentLikeSchema = z.object({
-  postId: RecordIdSchema,
+  commentId: RecordIdSchema,
 });
 
 interface FieldErrors {
