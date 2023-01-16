@@ -6,7 +6,11 @@ export function NumLikes (props: Props) {
   const { children } = props;
   return (
     <>
-      <b>{children}</b> {children === 1 ? "like" : "likes"}
+      {Boolean(children) && (
+        <>
+          <b>{children}</b> {children === 1 ? "like" : "likes"}
+        </>
+      )}
     </>
   )
 }
