@@ -4,16 +4,17 @@ import { useFetcher } from "@remix-run/react";
 import { useEffect, useMemo, useRef } from "react";
 import 'react-gallery-carousel/dist/index.css';
 import { useCloudinary } from "remix-chakra-reusables";
+import { ActionableComment } from "./ActionableComment";
 import { CommentOnPost } from "./CommentOnPost";
 import { ImageCarousel } from "./ImageCarousel";
-import { NumLikes } from "./NumLikes";
+import { OptimisticActionableComment } from "./OptimisticActionableComment";
 import { PostCardHeader } from "./PostCardHeader";
 import { PostDropDownMenu } from "./PostDropDownMenu";
-import { ProfilePic } from "./ProfilePic";
 
 interface Props {
   currentUserId: string | undefined;
   currentUserFullName: string | undefined;
+  currentUserImageId: string | undefined;
   postId: string;
   userImageId: string;
   userFullName: string;
@@ -24,6 +25,7 @@ interface Props {
     userImageId: string;
     userFullName: string;
     content: string;
+    likedByCurrentUser: boolean;
     numLikes: number;
     createdAt: string;
   }[],
@@ -33,7 +35,7 @@ interface Props {
 }
 
 export function ExpandedPostCard (props: Props) {
-  const { currentUserId, currentUserFullName, postId, userImageId, likedByCurrentUser } = props;
+  const { currentUserId, currentUserFullName, currentUserImageId, postId, userImageId, likedByCurrentUser } = props;
   const { comments, numLikes, description, userFullName, imageIds, createdAt } = props;
 
   const { CloudinaryUtil } = useCloudinary();
@@ -90,10 +92,16 @@ export function ExpandedPostCard (props: Props) {
       bgColor={colorMode === "light" ? "white" : "whiteAlpha.200"}
     >
       <HStack h="100%" justify="center" align="stretch" spacing={0}>
-        <VStack justify="center" align="stretch" w="50%" bgColor="blackAlpha.100">
+        <VStack
+          display={{ base: "none", lg: "flex" }}
+          bgColor="blackAlpha.100"
+          justify="center"
+          align="stretch"
+          w="50%"
+        >
           <ImageCarousel imageUrls={imageUrls} />
         </VStack>
-        <VStack h="100%" align="stretch" w={{ base: "100%", sm: "50%" }} spacing={0}>
+        <VStack h="100%" align="stretch" w={{ base: "100%", lg: "50%" }} spacing={0}>
           <HStack align="center" p={4}>
             <Heading size="sm">
               Comments
@@ -104,37 +112,43 @@ export function ExpandedPostCard (props: Props) {
           <Divider />
           <VStack align="stretch" flexGrow={1} overflowY="auto" spacing={4} p={4}>
             {fetcher.submission && (
-              <Text fontSize="sm">
-                <b>{currentUserFullName}</b> {fetcher.submission.formData.get("content")?.toString().substring(0, 40)}
-              </Text>
+              <OptimisticActionableComment
+                userImageId={currentUserImageId || ""}
+                userFullName={currentUserFullName || ""}
+                content={fetcher.submission.formData.get("content")?.toString() || ""}
+              />
             )}
             {comments.map(comment => (
-              <HStack key={comment.id} align="center" spacing={4}>
-                <ProfilePic
-                  imageId={comment.userImageId}
-                  fullName={comment.userFullName}
-                />
-                <VStack align="stretch" spacing={0}>
-                  <Text fontSize="sm">
-                    <b>{comment.userFullName}</b> {comment.content.substring(0, 40)}
-                  </Text>
-                  <Text fontSize="xs" color={liteTextColor}>
-                    {createdAt} &middot; <NumLikes>{numLikes}</NumLikes>
-                  </Text>
-                </VStack>
-              </HStack>
+              <ActionableComment
+                key={comment.id}
+                id={comment.id}
+                userImageId={comment.userImageId}
+                userFullName={comment.userFullName}
+                content={comment.content}
+                numLikes={comment.numLikes}
+                likedByCurrentUser={comment.likedByCurrentUser}
+                createdAt={comment.createdAt}
+              />
             ))}
           </VStack>
           <Divider />
-          <PostCardHeader
-            userImageId={userImageId}
-            userFullName={userFullName}
-            numLikes={numLikes}
-            postId={postId}
-            likedByCurrentUser={likedByCurrentUser}
+          <VStack align="stretch" display={{ base: "none", lg: "flex" }}>
+            <PostCardHeader
+              userImageId={userImageId}
+              userFullName={userFullName}
+              numLikes={numLikes}
+              postId={postId}
+              likedByCurrentUser={likedByCurrentUser}
+              p={4}
+            />
+          </VStack>
+          <VStack
+            display={{ base: "none", lg: "flex" }}
+            overflowY="auto"
+            align="stretch"
+            spacing={2}
             p={4}
-          />
-          <VStack overflowY="auto" align="stretch" p={4} spacing={2}>
+          >
             {description && (
               <Text fontSize="sm" color={liteTextColor}>
                 {description}
