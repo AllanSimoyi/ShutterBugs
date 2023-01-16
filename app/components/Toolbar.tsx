@@ -8,10 +8,11 @@ import { DropDownMenu } from './DropDownMenu';
 
 export interface ToolbarProps {
   currentUserName: string | undefined;
+  hideSearchOnMobile?: boolean;
 }
 
 export function Toolbar (props: ToolbarProps) {
-  const { currentUserName } = props;
+  const { hideSearchOnMobile, currentUserName } = props;
   const { colorMode } = useColorMode();
 
   return (
@@ -23,7 +24,8 @@ export function Toolbar (props: ToolbarProps) {
       align={"stretch"}
       position="relative"
       backdropFilter="saturate(240%) blur(10px)"
-      backgroundColor={colorMode === "light" ? "whiteAlpha.800" : "blackAlpha.600"}
+      backgroundColor={colorMode === "light" ? "whiteAlpha.800" : "whiteAlpha.200"}
+      // backgroundColor={colorMode === "light" ? "whiteAlpha.800" : "blackAlpha.600"}
       style={{ position: 'sticky' }}
       sx={{ position: '-webkit-sticky', top: '0' }}
     >
@@ -50,6 +52,7 @@ export function Toolbar (props: ToolbarProps) {
             justify="center"
             align="center"
             borderRadius={30}
+            display={{ base: hideSearchOnMobile ? "none" : "flex", lg: "flex" }}
             bgColor={colorMode === "light" ? "blackAlpha.200" : "whiteAlpha.200"}
             flexGrow={1}
             spacing={4}
