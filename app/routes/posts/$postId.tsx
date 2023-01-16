@@ -172,6 +172,7 @@ export default function PostComponent () {
         <ExpandedPostCard
           currentUserId={user?.id}
           currentUserFullName={user?.fullName}
+          currentUserImageId={user?.picId}
           postId={post.id}
           userImageId={post.user.picId}
           userFullName={post.user.fullName}
