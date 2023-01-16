@@ -1,16 +1,17 @@
 import { VStack } from "@chakra-ui/react";
-import type { LinksFunction, LoaderArgs } from "@remix-run/node";
+import type { ActionArgs, LinksFunction, LoaderArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import carouselUrl from 'react-gallery-carousel/dist/index.css';
-import { CenteredView, Footer, RecordIdSchema, StatusCode } from "remix-chakra-reusables";
+import { CenteredView, getRawFormFields, RecordIdSchema, StatusCode } from "remix-chakra-reusables";
 import { ExpandedPostCard } from "~/components/ExpandedPostCard";
 import { Toolbar } from "~/components/Toolbar";
 import { prisma } from "~/db.server";
-import { PRODUCT_NAME } from "~/lib/constants";
-import { getUserId } from "~/session.server";
+import { FormActionIdentifier, FormActionSchema } from "~/lib/forms.validations";
+import { flattenErrors, handlePostComment, handleToggleCommentLike, handleTogglePostLike } from "~/lib/posts";
+import { getUserId, requireUserId } from "~/session.server";
 import { useOptionalUser } from "~/utils";
 
 dayjs.extend(relativeTime);
@@ -58,6 +59,15 @@ function fetchPost (postId: string, currentUserId: string | undefined) {
               fullName: true,
             }
           },
+          likes: {
+            take: 1,
+            where: {
+              userId: currentUserId,
+            },
+            select: {
+              id: true,
+            }
+          },
           _count: {
             select: {
               likes: true,
@@ -81,13 +91,6 @@ function fetchPost (postId: string, currentUserId: string | undefined) {
     },
   });
 }
-function getDeveloperLink () {
-  const developerLink = process.env.DEVELOPER_WEBSITE_LINK;
-  if (!developerLink) {
-    throw new Response("Developer website link is missing", { status: StatusCode.NotFound });
-  }
-  return developerLink;
-}
 async function getPageData (postId: string, currentUserId: string | undefined) {
   const post = await fetchPost(postId, currentUserId);
   if (!post) {
@@ -95,7 +98,6 @@ async function getPageData (postId: string, currentUserId: string | undefined) {
   }
 
   return {
-    developerLink: getDeveloperLink(),
     post: {
       ...post,
       likedByCurrentUser: currentUserId ?
@@ -103,7 +105,10 @@ async function getPageData (postId: string, currentUserId: string | undefined) {
         false,
       comments: post.comments.map(comment => ({
         ...comment,
-        createdAt: dayjs(comment.createdAt),
+        likedByCurrentUser: currentUserId ?
+          comment.likes.length > 0 :
+          false,
+        createdAt: dayjs(comment.createdAt).fromNow(),
       })),
       createdAt: dayjs(post.createdAt).fromNow(),
     }
@@ -123,17 +128,47 @@ export async function loader ({ request, params }: LoaderArgs) {
   return json(data);
 }
 
+export async function action ({ request }: ActionArgs) {
+  const currentUserId = await requireUserId(request);
+  const fields = await getRawFormFields(request);
+
+  const result = await FormActionSchema.safeParseAsync(fields);
+  if (!result.success) {
+    const { fieldErrors, formErrors } = result.error.flatten();
+    const errorMessage = flattenErrors({ fieldErrors, formErrors });
+    return json({ errorMessage });
+  }
+  const { _action } = result.data;
+
+  if (_action === FormActionIdentifier.Comment) {
+    return handlePostComment(fields, currentUserId);
+  }
+  if (_action === FormActionIdentifier.TogglePostLike) {
+    return handleTogglePostLike(fields, currentUserId);
+  }
+  if (_action === FormActionIdentifier.ToggleCommentLike) {
+    return handleToggleCommentLike(fields, currentUserId);
+  }
+  return json({ errorMessage: "Invalid form action provided" });
+}
 
 export default function PostComponent () {
   const user = useOptionalUser();
-  const { developerLink, post } = useLoaderData<typeof loader>();
+  const { post } = useLoaderData<typeof loader>();
 
   return (
     <VStack align="stretch" h="100vh">
-      <Toolbar currentUserName={user?.fullName || ""} />
-      <CenteredView align="stretch" flexGrow={1} overflowY="hidden" innerProps={{ h: "100%" }} p={4}>
-        {/* <HStack align="stretch">
-        </HStack> */}
+      <Toolbar
+        currentUserName={user?.fullName || ""}
+        hideSearchOnMobile={true}
+      />
+      <CenteredView
+        align="stretch"
+        flexGrow={1}
+        overflowY="hidden"
+        innerProps={{ h: "100%" }}
+        p={4}
+      >
         <ExpandedPostCard
           currentUserId={user?.id}
           currentUserFullName={user?.fullName}
@@ -148,6 +183,7 @@ export default function PostComponent () {
             userFullName: comment.user.fullName,
             content: comment.content,
             numLikes: comment._count.likes,
+            likedByCurrentUser: comment.likedByCurrentUser,
             createdAt: comment.createdAt,
           }))}
           description={post.description}
@@ -155,11 +191,6 @@ export default function PostComponent () {
           createdAt={post.createdAt}
         />
       </CenteredView>
-      <Footer
-        appTitle={PRODUCT_NAME}
-        developerName={"Allan Simoyi"}
-        developerLink={developerLink}
-      />
     </VStack>
   )
 }
