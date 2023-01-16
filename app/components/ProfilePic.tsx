@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { useCloudinary } from "remix-chakra-reusables";
 
 interface Props {
-  imageId: string;
+  imageId: string | undefined;
   fullName: string;
 }
 
@@ -22,12 +22,11 @@ export function ProfilePic (props: Props) {
   }, [imageId, CloudinaryUtil]);
 
   return (
-    <VStack align="stretch">
+    <VStack align="stretch" flexShrink={1}>
       {imageId && (
         <Img
           src={imageSrc}
-          width="40px"
-          height="40px"
+          boxSize={"40px"}
           borderRadius='full'
         />
       )}
@@ -35,6 +34,7 @@ export function ProfilePic (props: Props) {
         <Avatar
           name={fullName || ""}
           src={""}
+          boxSize={"40px"}
         />
       )}
     </VStack>
