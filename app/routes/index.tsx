@@ -1,19 +1,20 @@
-import dayjs from "dayjs";
 import { SimpleGrid, VStack } from "@chakra-ui/react";
 import type { LinksFunction, LoaderArgs } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import type { ActionArgs } from "@remix-run/server-runtime";
 import { json } from "@remix-run/server-runtime";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
 import carouselUrl from 'react-gallery-carousel/dist/index.css';
 import { CenteredView, Footer, getRawFormFields, StatusCode } from "remix-chakra-reusables";
 import { PostCard } from "~/components/PostCard";
 import { Toolbar } from "~/components/Toolbar";
 import { prisma } from "~/db.server";
 import { PRODUCT_NAME } from "~/lib/constants";
-import { flattenFieldErrors, FormActionIdentifier, FormActionSchema, PostCommentSchema, ToggleCommentLikeSchema, TogglePostLikeSchema } from "~/lib/forms.validations";
+import { FormActionIdentifier, FormActionSchema } from "~/lib/forms.validations";
+import { flattenErrors, handlePostComment, handleTogglePostLike } from "~/lib/posts";
 import { getUserId, requireUserId } from "~/session.server";
 import { useOptionalUser } from "~/utils";
-import relativeTime from "dayjs/plugin/relativeTime";
 
 dayjs.extend(relativeTime);
 
@@ -109,116 +110,6 @@ export async function loader ({ request }: LoaderArgs) {
   return json(data);
 }
 
-interface FlattenErrorsProps {
-  fieldErrors: {
-    [x: string]: string[] | undefined;
-  },
-  formErrors: string[]
-}
-function flattenErrors (props: FlattenErrorsProps) {
-  const { fieldErrors, formErrors } = props;
-
-  const flattenedFieldErrors = fieldErrors ?
-    flattenFieldErrors(fieldErrors) :
-    "";
-  const flattenedFormErrors = formErrors.join(", ");
-
-  return [flattenedFieldErrors, flattenedFormErrors]
-    .filter(el => el)
-    .join(", ");
-}
-
-async function handlePostComment (fields: any, currentUserId: string) {
-  const result = await PostCommentSchema.safeParseAsync(fields);
-  if (!result.success) {
-    const { fieldErrors, formErrors } = result.error.flatten();
-    const errorMessage = flattenErrors({ fieldErrors, formErrors });
-    return json({ errorMessage });
-  }
-  const { postId, content } = result.data;
-
-  await prisma.comment.create({
-    data: {
-      postId,
-      userId: currentUserId,
-      content,
-    }
-  });
-  return json({ errorMessage: "" });
-}
-
-async function handleTogglePostLike (fields: any, currentUserId: string) {
-  const result = await TogglePostLikeSchema.safeParseAsync(fields);
-  if (!result.success) {
-    const { fieldErrors, formErrors } = result.error.flatten();
-    const errorMessage = flattenErrors({ fieldErrors, formErrors });
-    return json({ errorMessage });
-  }
-  const { postId } = result.data;
-
-  const currentUserLikes = await prisma.postLike.findMany({
-    where: {
-      postId,
-      userId: currentUserId,
-    }
-  });
-  if (currentUserLikes.length) {
-    await Promise.all(
-      currentUserLikes.map(currentUserLike => {
-        return prisma.postLike.delete({
-          where: {
-            id: currentUserLike.id,
-          }
-        });
-      })
-    );
-  } else {
-    await prisma.postLike.create({
-      data: {
-        postId,
-        userId: currentUserId,
-      }
-    });
-  }
-  return json({ errorMessage: "" });
-}
-
-async function handleToggleCommentLike (fields: any, currentUserId: string) {
-  const result = await ToggleCommentLikeSchema.safeParseAsync(fields);
-  if (!result.success) {
-    const { fieldErrors, formErrors } = result.error.flatten();
-    const errorMessage = flattenErrors({ fieldErrors, formErrors });
-    return json({ errorMessage });
-  }
-  const { commentId } = result.data;
-
-  const currentUserCommentLikes = await prisma.commentLike.findMany({
-    where: {
-      commentId,
-      userId: currentUserId,
-    }
-  });
-  if (currentUserCommentLikes.length) {
-    await Promise.all(
-      currentUserCommentLikes.map(currentUserCommentLike => {
-        return prisma.commentLike.delete({
-          where: {
-            id: currentUserCommentLike.id,
-          }
-        });
-      })
-    );
-  } else {
-    await prisma.commentLike.create({
-      data: {
-        commentId,
-        userId: currentUserId,
-      }
-    });
-  }
-  return json({ errorMessage: "" });
-}
-
 export async function action ({ request }: ActionArgs) {
   const currentUserId = await requireUserId(request);
   const fields = await getRawFormFields(request);
@@ -237,9 +128,6 @@ export async function action ({ request }: ActionArgs) {
   if (_action === FormActionIdentifier.TogglePostLike) {
     return handleTogglePostLike(fields, currentUserId);
   }
-  if (_action === FormActionIdentifier.ToggleCommentLike) {
-    return handleToggleCommentLike(fields, currentUserId);
-  }
   return json({ errorMessage: "Invalid form action provided" });
 }
 
@@ -251,7 +139,10 @@ export default function Index () {
     <VStack align="stretch" minH="100vh">
       <Toolbar currentUserName={user?.fullName || ""} />
       <VStack align="stretch" flexGrow={1} py={8}>
-        <CenteredView w={{ base: "100%", md: "60%", lg: "40%" }} px={4}>
+        <CenteredView
+          w={{ base: "100%", md: "60%", lg: "40%" }}
+          px={{ base: 0, lg: 4 }}
+        >
           <SimpleGrid columns={{ sm: 1, md: 1, lg: 1 }} spacing={12}>
             {posts.map((post) => (
               <VStack align="stretch" key={post.id}>
