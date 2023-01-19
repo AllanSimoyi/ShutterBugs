@@ -27,7 +27,7 @@ export function DropDownMenu (props: Props) {
               Settings
             </MenuItem>
             <MenuDivider />
-            <MenuItem as={Link} to={AppLinks.Home} fontSize={"sm"} py={2}>
+            <MenuItem as={Link} to={AppLinks.NewPost} fontSize={"sm"} py={2}>
               Create
             </MenuItem>
             <MenuDivider />
