@@ -10,7 +10,7 @@ import { ExpandedPostCard } from "~/components/ExpandedPostCard";
 import { Toolbar } from "~/components/Toolbar";
 import { prisma } from "~/db.server";
 import { FormActionIdentifier, FormActionSchema } from "~/lib/forms.validations";
-import { flattenErrors, handlePostComment, handleToggleCommentLike, handleTogglePostLike } from "~/lib/posts";
+import { flattenErrors, handlePostComment, handleToggleCommentLike, handleTogglePostLike } from "~/lib/post.server";
 import { getUserId, requireUserId } from "~/session.server";
 import { useOptionalUser } from "~/utils";
 
@@ -167,7 +167,9 @@ export default function PostComponent () {
         flexGrow={1}
         overflowY="hidden"
         innerProps={{ h: "100%" }}
-        p={4}
+        // p={4}
+        py={4}
+        px={{ base: 0, lg: 4 }}
       >
         <ExpandedPostCard
           currentUserId={user?.id}
