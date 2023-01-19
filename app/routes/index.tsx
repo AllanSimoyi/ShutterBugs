@@ -12,7 +12,7 @@ import { Toolbar } from "~/components/Toolbar";
 import { prisma } from "~/db.server";
 import { PRODUCT_NAME } from "~/lib/constants";
 import { FormActionIdentifier, FormActionSchema } from "~/lib/forms.validations";
-import { flattenErrors, handlePostComment, handleTogglePostLike } from "~/lib/posts";
+import { flattenErrors, handlePostComment, handleTogglePostLike } from "~/lib/post.server";
 import { getUserId, requireUserId } from "~/session.server";
 import { useOptionalUser } from "~/utils";
 
