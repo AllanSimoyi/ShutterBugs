@@ -3,5 +3,6 @@ export const AppLinks = {
   Login: "/login",
   Join: "/join",
   CustomerCare: "/customer-care",
+  NewPost: "/posts/new",
   Post: (postId: string) => `/posts/${postId}`,
 }
