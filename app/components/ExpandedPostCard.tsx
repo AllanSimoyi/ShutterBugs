@@ -3,7 +3,7 @@ import { byRadius } from "@cloudinary/url-gen/actions/roundCorners";
 import { useFetcher } from "@remix-run/react";
 import { useEffect, useMemo, useRef } from "react";
 import 'react-gallery-carousel/dist/index.css';
-import { useCloudinary } from "remix-chakra-reusables";
+import { RecordsNotFound, useCloudinary } from "remix-chakra-reusables";
 import { ActionableComment } from "./ActionableComment";
 import { CommentOnPost } from "./CommentOnPost";
 import { ImageCarousel } from "./ImageCarousel";
@@ -117,6 +117,13 @@ export function ExpandedPostCard (props: Props) {
                 userFullName={currentUserFullName || ""}
                 content={fetcher.submission.formData.get("content")?.toString() || ""}
               />
+            )}
+            {!comments.length && (
+              <VStack justify={"center"} align="center" p={4} flexGrow={1}>
+                <RecordsNotFound>
+                  No comments yet
+                </RecordsNotFound>
+              </VStack>
             )}
             {comments.map(comment => (
               <ActionableComment
