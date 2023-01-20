@@ -139,7 +139,7 @@ export function ExpandedPostCard (props: Props) {
             ))}
           </VStack>
           <Divider />
-          <VStack align="stretch" display={{ base: "none", lg: "flex" }}>
+          <VStack align="stretch" display={{ base: comments.length ? "none" : "flex", lg: "flex" }}>
             <PostCardHeader
               userImageId={userImageId}
               userFullName={userFullName}
@@ -150,7 +150,7 @@ export function ExpandedPostCard (props: Props) {
             />
           </VStack>
           <VStack
-            display={{ base: "none", lg: "flex" }}
+            display={{ base: comments.length ? "none" : "flex", lg: "flex" }}
             overflowY="auto"
             align="stretch"
             spacing={2}
