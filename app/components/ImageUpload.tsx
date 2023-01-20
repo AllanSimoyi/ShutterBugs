@@ -35,7 +35,8 @@ export function ImageUpload (props: Props) {
 
   return (
     <VStack
-      h={240}
+      h={isUploading ? undefined : 240}
+      w="100%"
       borderWidth={1}
       align="stretch"
       bgSize="cover"
@@ -46,29 +47,25 @@ export function ImageUpload (props: Props) {
       borderColor={getLiteTextColor(colorMode)}
     >
       <HStack align="center" p={2}>
+        {isUploading && (
+          <Text fontSize="lg">
+            Uploading...
+          </Text>
+        )}
         <Spacer />
-        <IconButton
-          size={"md"}
-          icon={<X />}
-          color="red.400"
-          bgColor="white"
-          variant="solid"
-          borderRadius={10}
-          aria-label="Remove Image"
-          onClick={handleRemoveClick}
-        />
+        {!isUploading && (
+          <IconButton
+            size={"md"}
+            icon={<X />}
+            color="red.400"
+            bgColor="white"
+            variant="solid"
+            borderRadius={10}
+            aria-label="Remove Image"
+            onClick={handleRemoveClick}
+          />
+        )}
       </HStack>
-      <Spacer />
-      {isUploading && (
-        <>
-          <VStack justify="center" align="center" p={4}>
-            <Text fontSize="lg">
-              Uploading...
-            </Text>
-          </VStack>
-          <Spacer />
-        </>
-      )}
     </VStack>
   )
 }
