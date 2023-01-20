@@ -1,12 +1,15 @@
 import { Divider, Heading, HStack, IconButton, Spacer, useColorMode, useToast, VStack } from "@chakra-ui/react";
 import { useFetcher, useLoaderData, useNavigate } from "@remix-run/react";
-import type { ActionArgs, LoaderArgs } from "@remix-run/server-runtime";
+import type { ActionArgs, LinksFunction, LoaderArgs } from "@remix-run/server-runtime";
 import { json } from "@remix-run/server-runtime";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import carouselUrl from 'react-gallery-carousel/dist/index.css';
 import type { CustomActionData, Result } from "remix-chakra-reusables";
-import { ActionContextProvider, CenteredView, getRawFormFields, processBadRequest } from "remix-chakra-reusables";
+import { ActionContextProvider } from "remix-chakra-reusables";
+import { badRequest, CenteredView, getRawFormFields, processBadRequest } from "remix-chakra-reusables";
 import { ArrowNarrowLeft, ArrowNarrowRight, Check } from "tabler-icons-react";
 import { z } from "zod";
+import { CustomCatchBoundary, CustomErrorBoundary } from '~/components/CustomComponents';
 import { Done } from "~/components/Done";
 import { ImageUploadMetaData } from "~/components/ImageUploadMetaData";
 import { Posting } from "~/components/Posting";
@@ -14,9 +17,16 @@ import { Toolbar } from "~/components/Toolbar";
 import { UploadImages } from "~/components/UploadImages";
 import { prisma } from "~/db.server";
 import { useUploadImages } from "~/hooks/useUploadImages";
+import { formResultProps } from "~/lib/forms.validations";
 import { AppLinks } from "~/lib/links";
 import { requireUser, requireUserId } from "~/session.server";
 import { useUser } from "~/utils";
+
+export let links: LinksFunction = () => {
+  return [
+    { rel: "stylesheet", href: carouselUrl }
+  ]
+}
 
 export async function loader ({ request }: LoaderArgs) {
   await requireUser(request);
@@ -40,11 +50,19 @@ export async function action ({ request }: ActionArgs) {
 
   const result = await Schema.safeParseAsync(fields);
   if (!result.success) {
-    console.log("validation error");
     return processBadRequest(result.error, fields);
   }
   const { imageIds, description } = result.data;
-  console.log("passed validation");
+
+  if (!imageIds.length) {
+    return badRequest({
+      fields,
+      fieldErrors: {
+        imageIds: ["Upload at least 1 image"],
+      },
+      formError: undefined,
+    });
+  }
 
   const post = await prisma.post.create({
     data: {
@@ -74,19 +92,18 @@ type Err = CustomActionData<typeof Schema>;
 
 export default function NewPost () {
   const currentUser = useUser();
+
   useLoaderData();
-  const toast = useToast();
   const fetcher = useFetcher<Result<Ok, Err>>();
+
+  const toast = useToast();
   const navigate = useNavigate();
   const { colorMode } = useColorMode();
 
-  console.log("fetcher data: ", fetcher.data);
-
   const [currentScreen, setCurrentScreen] = useState<Screen>(Screen.Images);
 
-  // const { imageUploads, setImageUploads, uploadImages, error } = useUploadImages({
   const imageUploadTools = useUploadImages({
-    imageIds: ["Image_One", "Two_c11yl7", "Three_whxzvj"]
+    imageIds: [],
   });
 
   const previousIsDisabled = useMemo(() => {
@@ -127,12 +144,14 @@ export default function NewPost () {
   }, [toast, fetcher.data]);
 
   useEffect(() => {
-    if (!fetcher.data?.success && (fetcher.data?.err.fieldErrors?.imageIds || fetcher.data?.err.fieldErrors?.description)) {
-      toast({
-        title: "Something's wrong with your input, please revise your input and try again",
-        status: "error",
-        isClosable: true,
-      });
+    if (
+      !fetcher.data?.success &&
+      (
+        fetcher.data?.err.fieldErrors?.imageIds ||
+        fetcher.data?.err.fieldErrors?.description
+      )
+    ) {
+      setCurrentScreen(Screen.Images);
     }
   }, [toast, fetcher.data]);
 
@@ -146,7 +165,7 @@ export default function NewPost () {
 
   return (
     <fetcher.Form method="post" style={{ height: "100vh" }}>
-      <ActionContextProvider {...fetcher.data} isSubmitting={isPosting}>
+      <ActionContextProvider {...formResultProps(fetcher.data)} isSubmitting={isPosting}>
         <VStack align="stretch" h="100vh">
           <Toolbar
             currentUserName={currentUser.fullName}
@@ -179,7 +198,7 @@ export default function NewPost () {
                 />
                 <Spacer />
                 <Heading size='md'>
-                  {!isPosting && (
+                  {!isPosting && !isDone && (
                     <>
                       {currentScreen === Screen.Images && "Select Images"}
                       {currentScreen === Screen.MetaData && "Details"}
@@ -236,4 +255,12 @@ export default function NewPost () {
       </ActionContextProvider>
     </fetcher.Form>
   )
+}
+
+export function CatchBoundary () {
+  return <CustomCatchBoundary />
+}
+
+export function ErrorBoundary ({ error }: { error: Error }) {
+  return <CustomErrorBoundary error={error} />
 }
