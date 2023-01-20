@@ -166,8 +166,7 @@ export default function PostComponent () {
         align="stretch"
         flexGrow={1}
         overflowY="hidden"
-        innerProps={{ h: "100%" }}
-        // p={4}
+        innerProps={{ h: "100%", w: { base: "100%", md: "60%", lg: "90%" } }}
         py={4}
         px={{ base: 0, lg: 4 }}
       >
