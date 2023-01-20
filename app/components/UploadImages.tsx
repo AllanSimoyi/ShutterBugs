@@ -19,8 +19,6 @@ export function UploadImages (props: Props) {
   const toast = useToast();
   const { error: imageIdErrors } = useField("imageIds");
 
-  console.log("imageIdErrors", imageIdErrors);
-
   useEffect(() => {
     if (error) {
       toast({
