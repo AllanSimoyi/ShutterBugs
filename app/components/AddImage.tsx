@@ -19,10 +19,11 @@ export function AddImage (props: Props) {
   return (
     <VStack align="stretch">
       <input
-        type="file"
-        capture="environment"
-        accept="image/*"
+        multiple
         id="file"
+        type="file"
+        accept="image/*"
+        capture="environment"
         onChange={handleChange}
         style={fileInputStyle}
       />
