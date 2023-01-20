@@ -1,4 +1,4 @@
-import { IconButton, Menu, MenuButton, MenuDivider, MenuItem, MenuList } from "@chakra-ui/react";
+import { IconButton, Menu, MenuButton, MenuItem, MenuList } from "@chakra-ui/react";
 import { Form, Link } from "@remix-run/react";
 import { ChevronDown } from "tabler-icons-react";
 import { AppLinks } from "~/lib/links";
@@ -26,11 +26,9 @@ export function DropDownMenu (props: Props) {
             <MenuItem as={Link} to={AppLinks.Home} fontSize={"sm"} py={2}>
               Settings
             </MenuItem>
-            <MenuDivider />
             <MenuItem as={Link} to={AppLinks.NewPost} fontSize={"sm"} py={2}>
               Create
             </MenuItem>
-            <MenuDivider />
             <Form action="/logout" method="post">
               <MenuItem type="submit" fontSize="sm" py={2}>
                 Log Out
