@@ -1,4 +1,3 @@
-import type { Result } from "remix-chakra-reusables";
 import { RecordIdSchema } from "remix-chakra-reusables";
 import { z } from "zod";
 
@@ -46,12 +45,4 @@ export function flattenFieldErrors (fieldErrors: FieldErrors) {
     .filter(el => el)
     .map(el => `${el.key}: ${el.errors?.join(", ")}`)
     .join(", ");
-}
-
-export function formResultProps<Ok, Err> (data: Result<Ok, Err> | undefined) {
-  return {
-    success: !!data?.success,
-    data: data?.success ? data.data : undefined,
-    err: data?.success ? undefined : data?.err,
-  }
 }
