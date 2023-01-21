@@ -1,10 +1,10 @@
-import { Link as ChakraLink, Button, CardBody, CardFooter, CardHeader, Center, Heading, HStack, Spacer, useToast, VStack } from "@chakra-ui/react";
+import { Button, CardBody, CardFooter, CardHeader, Center, Heading, HStack, Link as ChakraLink, Spacer, useToast, VStack } from "@chakra-ui/react";
 import type { ActionArgs, LoaderArgs, MetaFunction } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { Form, Link, useActionData, useLoaderData, useSearchParams, useTransition } from "@remix-run/react";
 import { useEffect } from "react";
-import type { CustomActionData } from "remix-chakra-reusables";
-import { ActionContextProvider, badRequest, CustomAlert, getRawFormFields, PrimaryButton, processBadRequest, TextField, ToggleColorMode } from "remix-chakra-reusables";
+import type { CustomActionData, Result} from "remix-chakra-reusables";
+import { ActionContextProvider, badRequest, CustomAlert, formResultProps, getRawFormFields, PrimaryButton, processBadRequest, TextField, ToggleColorMode } from "remix-chakra-reusables";
 import { z } from "zod";
 import { CustomCard, CustomCatchBoundary, CustomErrorBoundary } from "~/components/CustomComponents";
 import { EmailSchema } from "~/lib/auth.validations";
@@ -63,9 +63,12 @@ export async function action ({ request }: ActionArgs) {
   });
 }
 
+type Ok = { success: true, postId: string };
+type Err = CustomActionData<typeof Schema>;
+
 export default function LoginPage () {
   const { message } = useLoaderData<typeof loader>();
-  const actionData = useActionData<CustomActionData<typeof Schema>>();
+  const actionData = useActionData<Result<Ok, Err>>();
   const transition = useTransition();
   const [searchParams] = useSearchParams();
   const toast = useToast();
@@ -98,7 +101,7 @@ export default function LoginPage () {
         <Center>
           <VStack justify="center" align="stretch" w={["100%", "80%", "40%"]} spacing={12} p={4}>
             <Form method="post">
-              <ActionContextProvider {...actionData} isSubmitting={isProcessing}>
+              <ActionContextProvider {...formResultProps(actionData)} isSubmitting={isProcessing}>
                 <input
                   type="hidden"
                   name="redirectTo"
@@ -124,9 +127,9 @@ export default function LoginPage () {
                         label="Password"
                         type="password"
                       />
-                      {actionData?.formError && (
+                      {!actionData?.success && actionData?.err.formError && (
                         <CustomAlert status={"error"}>
-                          {actionData.formError}
+                          {actionData?.err.formError}
                         </CustomAlert>
                       )}
                     </VStack>

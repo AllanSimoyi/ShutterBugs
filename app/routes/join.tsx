@@ -1,9 +1,9 @@
-import { Link as ChakraLink, Button, CardBody, CardFooter, CardHeader, Center, Heading, HStack, Spacer, VStack } from "@chakra-ui/react";
+import { Button, CardBody, CardFooter, CardHeader, Center, Heading, HStack, Link as ChakraLink, Spacer, VStack } from "@chakra-ui/react";
 import type { ActionArgs, LoaderArgs, MetaFunction } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { Form, Link, useActionData, useTransition } from "@remix-run/react";
-import type { CustomActionData } from "remix-chakra-reusables";
-import { ActionContextProvider, badRequest, CustomAlert, FullNameSchema, getRawFormFields, PrimaryButton, processBadRequest, TextField, ToggleColorMode } from "remix-chakra-reusables";
+import type { CustomActionData, Result} from "remix-chakra-reusables";
+import { ActionContextProvider, badRequest, CustomAlert, formResultProps, FullNameSchema, getRawFormFields, PrimaryButton, processBadRequest, TextField, ToggleColorMode } from "remix-chakra-reusables";
 import { z } from "zod";
 import { CustomCard, CustomCatchBoundary, CustomErrorBoundary } from "~/components/CustomComponents";
 import { EmailSchema, PasswordSchema } from "~/lib/auth.validations";
@@ -65,8 +65,11 @@ export async function action ({ request }: ActionArgs) {
   });
 }
 
+type Ok = { success: true, postId: string };
+type Err = CustomActionData<typeof Schema>;
+
 export default function CreateAccount () {
-  const actionData = useActionData<CustomActionData<typeof Schema>>();
+  const actionData = useActionData<Result<Ok, Err>>();
   const transition = useTransition();
 
   const isProcessing = transition.state === "submitting" ||
@@ -85,7 +88,7 @@ export default function CreateAccount () {
         <Center>
           <VStack justify={"center"} align="stretch" p={4} w={["100%", "80%", "40%"]}>
             <Form method="post">
-              <ActionContextProvider {...actionData} isSubmitting={isProcessing}>
+              <ActionContextProvider {...formResultProps(actionData)} isSubmitting={isProcessing}>
                 <VStack align="stretch" spacing={6}>
                   <CustomCard>
                     <CardHeader>
@@ -117,9 +120,9 @@ export default function CreateAccount () {
                           label="Re-Enter Password"
                           type="password"
                         />
-                        {actionData?.formError && (
+                        {!actionData?.success && actionData?.err.formError && (
                           <CustomAlert status={"error"}>
-                            {actionData.formError}
+                            {actionData?.err.formError}
                           </CustomAlert>
                         )}
                       </VStack>
