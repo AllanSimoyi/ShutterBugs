@@ -44,7 +44,7 @@ import { Toolbar } from '~/components/Toolbar';
 import { UpdateProfilePic } from '~/components/UpdateProfilePic';
 import { prisma } from '~/db.server';
 import { AppLinks } from '~/lib/links';
-import { ImageUploadSizeLimit } from '~/lib/post.client';
+import { ImageUploadSizeLimit } from '~/lib/post.server';
 import { requireUser, requireUserId } from '~/session.server';
 import { useUser } from '~/utils';
 
@@ -52,9 +52,9 @@ export let links: LinksFunction = () => {
   return [{ rel: 'stylesheet', href: carouselUrl }];
 };
 
-export async function loader({ request }: LoaderArgs) {
+export async function loader ({ request }: LoaderArgs) {
   await requireUser(request);
-  return json({});
+  return json({ ImageUploadSizeLimit });
 }
 
 const ImageIdsSchema = z.array(z.string().min(1).max(100));
@@ -68,7 +68,7 @@ const Schema = z.object({
   description: z.string().max(1600),
 });
 
-export async function action({ request }: ActionArgs) {
+export async function action ({ request }: ActionArgs) {
   const currentUserId = await requireUserId(request);
   const fields = await getRawFormFields(request);
 
@@ -109,18 +109,19 @@ export async function action({ request }: ActionArgs) {
 type Ok = { success: true; postId: string };
 type Err = CustomActionData<typeof Schema>;
 
-export default function EditProfile() {
+export default function EditProfile () {
   const currentUser = useUser();
 
-  useLoaderData();
+  const { ImageUploadSizeLimit: imageUploadSizeLimit } =
+    useLoaderData<typeof loader>();
   const fetcher = useFetcher<Result<Ok, Err>>();
 
   const profilePic = useUploadImage({
     imageId: currentUser.picId || '',
     uploadState: currentUser.picId ? UploadState.Uploaded : UploadState.Idle,
     imageUploadSizeLimit: {
-      value: ImageUploadSizeLimit.Value,
-      caption: ImageUploadSizeLimit.Caption,
+      value: imageUploadSizeLimit.Value,
+      caption: imageUploadSizeLimit.Caption,
     },
   });
 
@@ -147,6 +148,7 @@ export default function EditProfile() {
               <CardHeader>
                 <HStack justify="center" align="center">
                   <IconButton
+                    variant="ghost"
                     as={Link}
                     to={AppLinks.Profile}
                     icon={<X />}
@@ -156,6 +158,7 @@ export default function EditProfile() {
                   <Heading size="md">Edit Profile</Heading>
                   <Spacer />
                   <IconButton
+                    variant="ghost"
                     type="submit"
                     icon={<Check />}
                     aria-label="Apply Changes"
@@ -170,15 +173,17 @@ export default function EditProfile() {
                     name="companyImageId"
                     value={profilePic.imageId}
                   />
-                  <UpdateProfilePic
-                    identifier="ProfilePic"
-                    fullName={currentUser.fullName}
-                    imageId={profilePic.imageId}
-                    onChange={profilePic.uploadImage}
-                    uploadState={profilePic.uploadState}
-                    uploadError={profilePic.uploadError}
-                    isProcessing={isProcessing}
-                  />
+                  <VStack align="center">
+                    <UpdateProfilePic
+                      identifier="ProfilePic"
+                      fullName={currentUser.fullName}
+                      imageId={profilePic.imageId}
+                      onChange={profilePic.uploadImage}
+                      uploadState={profilePic.uploadState}
+                      uploadError={profilePic.uploadError}
+                      isProcessing={isProcessing}
+                    />
+                  </VStack>
                   <TextField name="email" type="email" label="Email Address" />
                   <TextField name="fullName" type="text" label="Full Name" />
                   <TextField name="password" label="Password" type="password" />
@@ -191,8 +196,18 @@ export default function EditProfile() {
               </CardBody>
               <CardFooter>
                 <VStack w="100%" align="stretch" spacing={4}>
-                  <PrimaryButton type="submit" isDisabled={isProcessing}>
-                    {isProcessing ? 'Applying Changes...' : 'Apply Changes'}
+                  <PrimaryButton
+                    type="submit"
+                    isDisabled={
+                      isProcessing ||
+                      profilePic.uploadState === UploadState.Uploading
+                    }
+                  >
+                    {profilePic.uploadState === UploadState.Uploading
+                      ? 'Uploading Image...'
+                      : isProcessing
+                      ? 'Applying Changes...'
+                      : 'Apply Changes'}
                   </PrimaryButton>
                 </VStack>
               </CardFooter>
@@ -204,10 +219,10 @@ export default function EditProfile() {
   );
 }
 
-export function CatchBoundary() {
+export function CatchBoundary () {
   return <CustomCatchBoundary />;
 }
 
-export function ErrorBoundary({ error }: { error: Error }) {
+export function ErrorBoundary ({ error }: { error: Error }) {
   return <CustomErrorBoundary error={error} />;
 }
