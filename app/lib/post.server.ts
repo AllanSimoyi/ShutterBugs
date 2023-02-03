@@ -1,28 +1,39 @@
-import { json } from "@remix-run/server-runtime";
-import { prisma } from "~/db.server";
-import { flattenFieldErrors, PostCommentSchema, ToggleCommentLikeSchema, TogglePostLikeSchema } from "~/lib/forms.validations";
+import { json } from '@remix-run/server-runtime';
+
+import { prisma } from '~/db.server';
+import {
+  flattenFieldErrors,
+  PostCommentSchema,
+  ToggleCommentLikeSchema,
+  TogglePostLikeSchema,
+} from '~/lib/forms.validations';
 
 interface FlattenErrorsProps {
   fieldErrors: {
     [x: string]: string[] | undefined;
-  },
-  formErrors: string[]
+  };
+  formErrors: string[];
 }
 
-export function flattenErrors (props: FlattenErrorsProps) {
+export const ImageUploadSizeLimit = {
+  Value: 2_000_000,
+  Caption: '2MB',
+};
+
+export function flattenErrors(props: FlattenErrorsProps) {
   const { fieldErrors, formErrors } = props;
 
-  const flattenedFieldErrors = fieldErrors ?
-    flattenFieldErrors(fieldErrors) :
-    "";
-  const flattenedFormErrors = formErrors.join(", ");
+  const flattenedFieldErrors = fieldErrors
+    ? flattenFieldErrors(fieldErrors)
+    : '';
+  const flattenedFormErrors = formErrors.join(', ');
 
   return [flattenedFieldErrors, flattenedFormErrors]
-    .filter(el => el)
-    .join(", ");
+    .filter((el) => el)
+    .join(', ');
 }
 
-export async function handlePostComment (fields: any, currentUserId: string) {
+export async function handlePostComment(fields: any, currentUserId: string) {
   const result = await PostCommentSchema.safeParseAsync(fields);
   if (!result.success) {
     const { fieldErrors, formErrors } = result.error.flatten();
@@ -36,12 +47,12 @@ export async function handlePostComment (fields: any, currentUserId: string) {
       postId,
       userId: currentUserId,
       content,
-    }
+    },
   });
-  return json({ errorMessage: "" });
+  return json({ errorMessage: '' });
 }
 
-export async function handleTogglePostLike (fields: any, currentUserId: string) {
+export async function handleTogglePostLike(fields: any, currentUserId: string) {
   const result = await TogglePostLikeSchema.safeParseAsync(fields);
   if (!result.success) {
     const { fieldErrors, formErrors } = result.error.flatten();
@@ -54,15 +65,15 @@ export async function handleTogglePostLike (fields: any, currentUserId: string) 
     where: {
       postId,
       userId: currentUserId,
-    }
+    },
   });
   if (currentUserLikes.length) {
     await Promise.all(
-      currentUserLikes.map(currentUserLike => {
+      currentUserLikes.map((currentUserLike) => {
         return prisma.postLike.delete({
           where: {
             id: currentUserLike.id,
-          }
+          },
         });
       })
     );
@@ -71,13 +82,16 @@ export async function handleTogglePostLike (fields: any, currentUserId: string) 
       data: {
         postId,
         userId: currentUserId,
-      }
+      },
     });
   }
-  return json({ errorMessage: "" });
+  return json({ errorMessage: '' });
 }
 
-export async function handleToggleCommentLike (fields: any, currentUserId: string) {
+export async function handleToggleCommentLike(
+  fields: any,
+  currentUserId: string
+) {
   const result = await ToggleCommentLikeSchema.safeParseAsync(fields);
   if (!result.success) {
     const { fieldErrors, formErrors } = result.error.flatten();
@@ -90,15 +104,15 @@ export async function handleToggleCommentLike (fields: any, currentUserId: strin
     where: {
       commentId,
       userId: currentUserId,
-    }
+    },
   });
   if (currentUserCommentLikes.length) {
     await Promise.all(
-      currentUserCommentLikes.map(currentUserCommentLike => {
+      currentUserCommentLikes.map((currentUserCommentLike) => {
         return prisma.commentLike.delete({
           where: {
             id: currentUserCommentLike.id,
-          }
+          },
         });
       })
     );
@@ -107,8 +121,8 @@ export async function handleToggleCommentLike (fields: any, currentUserId: strin
       data: {
         commentId,
         userId: currentUserId,
-      }
+      },
     });
   }
-  return json({ errorMessage: "" });
+  return json({ errorMessage: '' });
 }
