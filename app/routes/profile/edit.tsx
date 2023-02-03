@@ -52,7 +52,7 @@ export let links: LinksFunction = () => {
   return [{ rel: 'stylesheet', href: carouselUrl }];
 };
 
-export async function loader ({ request }: LoaderArgs) {
+export async function loader({ request }: LoaderArgs) {
   await requireUser(request);
   return json({ ImageUploadSizeLimit });
 }
@@ -68,7 +68,7 @@ const Schema = z.object({
   description: z.string().max(1600),
 });
 
-export async function action ({ request }: ActionArgs) {
+export async function action({ request }: ActionArgs) {
   const currentUserId = await requireUserId(request);
   const fields = await getRawFormFields(request);
 
@@ -109,7 +109,7 @@ export async function action ({ request }: ActionArgs) {
 type Ok = { success: true; postId: string };
 type Err = CustomActionData<typeof Schema>;
 
-export default function EditProfile () {
+export default function EditProfile() {
   const currentUser = useUser();
 
   const { ImageUploadSizeLimit: imageUploadSizeLimit } =
@@ -219,10 +219,10 @@ export default function EditProfile () {
   );
 }
 
-export function CatchBoundary () {
+export function CatchBoundary() {
   return <CustomCatchBoundary />;
 }
 
-export function ErrorBoundary ({ error }: { error: Error }) {
+export function ErrorBoundary({ error }: { error: Error }) {
   return <CustomErrorBoundary error={error} />;
 }
