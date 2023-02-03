@@ -1,10 +1,8 @@
 import type { ChangeEvent } from 'react';
-import type { UploadState } from 'remix-chakra-reusables';
 
-import { Avatar, AvatarBadge, Icon } from '@chakra-ui/react';
-import { useCallback, useMemo } from 'react';
-import { useCloudinary } from 'remix-chakra-reusables';
-import { Edit } from 'tabler-icons-react';
+import { Avatar, keyframes } from '@chakra-ui/react';
+import { useCallback, useMemo, useState } from 'react';
+import { UploadState, useCloudinary } from 'remix-chakra-reusables';
 
 import { FILE_INPUT_STYLE } from '~/lib/constants';
 
@@ -18,15 +16,33 @@ interface Props {
   isProcessing: boolean;
 }
 
+const pulsate = keyframes`
+  0% { border-color: rgba(0, 255, 0, 1); }
+  50% { border-color: rgba(0, 255, 0, 0.2); }
+  100% { border-color: rgba(0, 255, 0, 1); }
+`;
+
 export function UpdateProfilePic(props: Props) {
   const { identifier, fullName, imageId, onChange, uploadState, isProcessing } =
     props;
 
   const { CloudinaryUtil } = useCloudinary();
 
+  const [uploadingImage, setUploadingImage] = useState<string | undefined>(
+    undefined
+  );
+
   const handleChange = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
       if (event.target.files) {
+        const reader = new FileReader();
+        reader.readAsDataURL(event.target.files[0]);
+        reader.onload = (e) => {
+          console.log(typeof e.target?.result);
+          if (e.target?.result && typeof e.target?.result === 'string') {
+            setUploadingImage(e.target?.result);
+          }
+        };
         onChange([event.target.files[0]!]);
       }
     },
@@ -39,26 +55,28 @@ export function UpdateProfilePic(props: Props) {
 
   return (
     <>
-      <Avatar size="2xl" name={fullName} src={imageSrc}>
-        <input
-          type="file"
-          accept="image/*"
-          id={identifier}
-          onChange={handleChange}
-          disabled={isProcessing}
-          style={FILE_INPUT_STYLE}
-        />
+      <input
+        type="file"
+        accept="image/*"
+        id={identifier}
+        onChange={handleChange}
+        disabled={isProcessing}
+        style={FILE_INPUT_STYLE}
+      />
+      {uploadState !== UploadState.Uploading && (
         <label htmlFor={identifier}>
-          <AvatarBadge
-            cursor="pointer"
-            boxSize="1.25em"
-            borderColor="transparent"
-            bg="white"
-          >
-            <Icon as={Edit} w={10} h={10} />
-          </AvatarBadge>
+          <Avatar cursor="pointer" size="2xl" name={fullName} src={imageSrc} />
         </label>
-      </Avatar>
+      )}
+      {uploadState === UploadState.Uploading && (
+        <Avatar
+          size="2xl"
+          name={fullName}
+          src={uploadingImage}
+          borderWidth={4}
+          animation={`${pulsate} infinite 2s ease-out`}
+        />
+      )}
     </>
   );
 }
