@@ -1,7 +1,14 @@
-import { Cloudinary } from "@cloudinary/url-gen";
-import { ChakraProvider, cookieStorageManagerSSR, localStorageManager, useColorMode, VStack } from '@chakra-ui/react';
-import { withEmotionCache } from '@emotion/react';
 import type { LinksFunction, LoaderArgs, MetaFunction } from '@remix-run/node';
+
+import {
+  ChakraProvider,
+  cookieStorageManagerSSR,
+  localStorageManager,
+  useColorMode,
+  VStack,
+} from '@chakra-ui/react';
+import { Cloudinary } from '@cloudinary/url-gen';
+import { withEmotionCache } from '@emotion/react';
 import { json } from '@remix-run/node'; // Depends on the runtime you choose
 import {
   Links,
@@ -10,45 +17,47 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
-  useLoaderData
+  useLoaderData,
 } from '@remix-run/react';
 import React, { useContext, useEffect, useMemo } from 'react';
 import { CloudinaryContextProvider } from 'remix-chakra-reusables';
+
 import { CustomRootBoundaryError } from './components/CustomComponents';
 import { ClientStyleContext, ServerStyleContext } from './context';
 import { PRODUCT_NAME } from './lib/constants';
 import { getUser } from './session.server';
-import customStylesUrl from "./styles/custom.css";
-import tailwindStylesheetUrl from "./styles/tailwind.css";
+import customStylesUrl from './styles/custom.css';
+import tailwindStylesheetUrl from './styles/tailwind.css';
 import theme from './theme';
 
 export const meta: MetaFunction = () => {
-  const description = "Home of enthusiastic photographers";
+  const description = 'Home of enthusiastic photographers';
   return {
     charset: 'utf-8',
     title: PRODUCT_NAME,
     description,
-    keywords: "Pictures, Photographers, Zimbabwe, Camera, Art, Aesthetic",
+    keywords: 'Pictures, Photographers, Zimbabwe, Camera, Art, Aesthetic',
     viewport: 'width=device-width,initial-scale=1',
-    "twitter:image": "https://res.cloudinary.com/df5xcjry9/image/upload/v1673178596/shutter_bugs_photo_daupcl.jpg",
-    "twitter:card": "summary_large_image",
-    "twitter:creator": "@simoyi_allan",
-    "twitter:site": "@simoyi_allan",
-    "twitter:title": PRODUCT_NAME,
-    "twitter:description": description,
-  }
+    'twitter:image':
+      'https://res.cloudinary.com/df5xcjry9/image/upload/v1673178596/shutter_bugs_photo_daupcl.jpg',
+    'twitter:card': 'summary_large_image',
+    'twitter:creator': '@simoyi_allan',
+    'twitter:site': '@simoyi_allan',
+    'twitter:title': PRODUCT_NAME,
+    'twitter:description': description,
+  };
 };
 
 export let links: LinksFunction = () => {
   return [
     {
       rel: 'stylesheet',
-      href: 'https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&display=swap'
+      href: 'https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&display=swap',
     },
-    { rel: "stylesheet", href: tailwindStylesheetUrl },
-    { rel: "stylesheet", href: customStylesUrl }
-  ]
-}
+    { rel: 'stylesheet', href: tailwindStylesheetUrl },
+    { rel: 'stylesheet', href: customStylesUrl },
+  ];
+};
 
 interface DocumentProps {
   children: React.ReactNode;
@@ -97,38 +106,38 @@ const Document = withEmotionCache(
   }
 );
 
-export async function loader ({ request }: LoaderArgs) {
+export async function loader({ request }: LoaderArgs) {
   const user = await getUser(request);
 
-  const CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME || "";
-  const UPLOAD_RESET = process.env.CLOUDINARY_UPLOAD_RESET || "";
+  const CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME || '';
+  const UPLOAD_RESET = process.env.CLOUDINARY_UPLOAD_RESET || '';
 
-  const cookies = request.headers.get("cookie") ?? '';
+  const cookies = request.headers.get('cookie') ?? '';
 
   return json({ user, CLOUD_NAME, UPLOAD_RESET, cookies });
 }
 
-function Bg ({ children }: { children: React.ReactNode; }) {
+function Bg({ children }: { children: React.ReactNode }) {
   const { colorMode } = useColorMode();
   return (
     <VStack
       align="stretch"
       minH="100vh"
-      bgColor={colorMode === "light" ? "blackAlpha.100" : undefined}
+      bgColor={colorMode === 'light' ? 'blackAlpha.100' : undefined}
     >
       {children}
     </VStack>
-  )
+  );
 }
 
-export default function App () {
+export default function App() {
   const { CLOUD_NAME, UPLOAD_RESET, cookies } = useLoaderData<typeof loader>();
 
   const CloudinaryUtil = useMemo(() => {
     return new Cloudinary({
       cloud: {
         cloudName: CLOUD_NAME,
-      }
+      },
     });
   }, [CLOUD_NAME]);
 
@@ -136,9 +145,11 @@ export default function App () {
     <Document>
       <ChakraProvider
         theme={theme}
-        colorModeManager={typeof cookies === 'string'
-          ? cookieStorageManagerSSR(cookies)
-          : localStorageManager}
+        colorModeManager={
+          typeof cookies === 'string'
+            ? cookieStorageManagerSSR(cookies)
+            : localStorageManager
+        }
       >
         <CloudinaryContextProvider
           CLOUDINARY_CLOUD_NAME={CLOUD_NAME}
@@ -151,10 +162,10 @@ export default function App () {
         </CloudinaryContextProvider>
       </ChakraProvider>
     </Document>
-  )
+  );
 }
 
-export function ErrorBoundary ({ error }: { error: Error }) {
+export function ErrorBoundary({ error }: { error: Error }) {
   return (
     <html>
       <head>
