@@ -1,14 +1,24 @@
-import { CardBody, Divider, Link as ChakraLink, Text, useColorMode, useToast, VStack } from "@chakra-ui/react";
-import { byRadius } from "@cloudinary/url-gen/actions/roundCorners";
-import { Link, useFetcher } from "@remix-run/react";
-import { useEffect, useMemo, useRef } from "react";
+import {
+  CardBody,
+  Divider,
+  Link as ChakraLink,
+  Text,
+  useColorMode,
+  useToast,
+  VStack,
+} from '@chakra-ui/react';
+import { byRadius } from '@cloudinary/url-gen/actions/roundCorners';
+import { Link, useFetcher } from '@remix-run/react';
+import { useEffect, useMemo, useRef } from 'react';
 import 'react-gallery-carousel/dist/index.css';
-import { useCloudinary } from "remix-chakra-reusables";
-import { AppLinks } from "~/lib/links";
-import { CommentOnPost } from "./CommentOnPost";
-import { CustomCard } from "./CustomComponents";
-import { ImageCarousel } from "./ImageCarousel";
-import { PostCardHeader } from "./PostCardHeader";
+import { useCloudinary } from 'remix-chakra-reusables';
+
+import { AppLinks } from '~/lib/links';
+
+import { CommentOnPost } from './CommentOnPost';
+import { CustomCard } from './CustomComponents';
+import { ImageCarousel } from './ImageCarousel';
+import { PostCardHeader } from './PostCardHeader';
 
 interface Props {
   currentUserId: string | undefined;
@@ -22,15 +32,21 @@ interface Props {
     id: string;
     userFullName: string;
     content: string;
-  }[],
+  }[];
   numComments: number;
   description: string;
   imageIds: string[];
   createdAt: string;
 }
 
-export function PostCard (props: Props) {
-  const { currentUserId, currentUserFullName, postId, userImageId, likedByCurrentUser } = props;
+export function PostCard(props: Props) {
+  const {
+    currentUserId,
+    currentUserFullName,
+    postId,
+    userImageId,
+    likedByCurrentUser,
+  } = props;
   const { lastComments, numLikes, description, userFullName, imageIds } = props;
   const { createdAt, numComments } = props;
 
@@ -40,14 +56,14 @@ export function PostCard (props: Props) {
   const toast = useToast();
   const commentRef = useRef<HTMLInputElement>(null);
 
-  const isSubmittingComment = fetcher.state === "submitting" ||
-    fetcher.state === "loading";
+  const isSubmittingComment =
+    fetcher.state === 'submitting' || fetcher.state === 'loading';
 
   useEffect(() => {
     if (fetcher.data?.errorMessage) {
       toast({
         title: fetcher.data?.errorMessage,
-        status: "error",
+        status: 'error',
         isClosable: true,
       });
     }
@@ -55,15 +71,14 @@ export function PostCard (props: Props) {
 
   useEffect(() => {
     if (isSubmittingComment && commentRef.current) {
-      commentRef.current.value = "";
+      commentRef.current.value = '';
     }
   }, [isSubmittingComment]);
 
   const imageUrls = useMemo(() => {
     return imageIds
       .map((imageId) => {
-        return CloudinaryUtil
-          .image(imageId)
+        return CloudinaryUtil.image(imageId)
           .roundCorners(byRadius(5))
           .format('auto')
           .quality('auto')
@@ -87,7 +102,9 @@ export function PostCard (props: Props) {
           {description && (
             <Text
               fontSize="sm"
-              color={colorMode === "light" ? "blackAlpha.700" : "whiteAlpha.700"}
+              color={
+                colorMode === 'light' ? 'blackAlpha.700' : 'whiteAlpha.700'
+              }
             >
               {description}
             </Text>
@@ -96,15 +113,22 @@ export function PostCard (props: Props) {
             <VStack align="stretch" spacing={1}>
               {fetcher.submission && (
                 <Text fontSize="sm">
-                  <b>{currentUserFullName}</b> {fetcher.submission.formData.get("content")?.toString().substring(0, 40)}
+                  <b>{currentUserFullName}</b>{' '}
+                  {fetcher.submission.formData
+                    .get('content')
+                    ?.toString()
+                    .substring(0, 40)}
                 </Text>
               )}
-              {(isSubmittingComment ? lastComments.slice(0, -1) : lastComments)
-                .map(comment => (
-                  <Text key={comment.id} fontSize="sm">
-                    <b>{comment.userFullName}</b> {comment.content.substring(0, 40)}
-                  </Text>
-                ))}
+              {(isSubmittingComment
+                ? lastComments.slice(0, -1)
+                : lastComments
+              ).map((comment) => (
+                <Text key={comment.id} fontSize="sm">
+                  <b>{comment.userFullName}</b>{' '}
+                  {comment.content.substring(0, 40)}
+                </Text>
+              ))}
             </VStack>
           )}
           {numComments > 2 && (
@@ -112,14 +136,15 @@ export function PostCard (props: Props) {
               as={Link}
               to={AppLinks.Post(postId)}
               fontSize="sm"
-              color={colorMode === "light" ? "blackAlpha.700" : "whiteAlpha.700"}
+              color={
+                colorMode === 'light' ? 'blackAlpha.700' : 'whiteAlpha.700'
+              }
             >
-              View All {isSubmittingComment ? numComments + 1 : numComments} Comment(s)
+              View All {isSubmittingComment ? numComments + 1 : numComments}{' '}
+              Comment(s)
             </ChakraLink>
           )}
-          <Text fontSize="sm">
-            {createdAt}
-          </Text>
+          <Text fontSize="sm">{createdAt}</Text>
         </VStack>
       </CardBody>
       <Divider />
@@ -133,5 +158,5 @@ export function PostCard (props: Props) {
         </fetcher.Form>
       )}
     </CustomCard>
-  )
+  );
 }
