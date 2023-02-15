@@ -39,7 +39,7 @@ export function Toolbar(props: ToolbarProps) {
       position="relative"
       backdropFilter="saturate(240%) blur(10px)"
       backgroundColor={
-        colorMode === 'light' ? 'whiteAlpha.800' : 'whiteAlpha.200'
+        colorMode === 'light' ? 'whiteAlpha.800' : 'blackAlpha.200'
       }
       style={{ position: 'sticky' }}
       sx={{ position: '-webkit-sticky', top: '0' }}
