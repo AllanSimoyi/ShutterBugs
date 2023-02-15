@@ -123,7 +123,7 @@ function Bg({ children }: { children: React.ReactNode }) {
     <VStack
       align="stretch"
       minH="100vh"
-      bgColor={colorMode === 'light' ? 'blackAlpha.100' : undefined}
+      bgColor={colorMode === 'light' ? 'blackAlpha.100' : 'blackAlpha.700'}
     >
       {children}
     </VStack>
