@@ -1,39 +1,36 @@
-import { IconButton } from "@chakra-ui/react";
-import { Heart } from "tabler-icons-react";
-import { FormActionIdentifier, FormActionName } from "~/lib/forms.validations";
+import { Heart } from 'tabler-icons-react';
+import { twMerge } from 'tailwind-merge';
+
+import { FormLiteral } from '~/lib/forms';
+
+import { GhostButton } from './GhostButton';
 
 interface Props {
   commentId: string;
   likedByCurrentUser: boolean;
 }
 
-export function LikeComment (props: Props) {
+export function LikeComment(props: Props) {
   const { commentId, likedByCurrentUser } = props;
 
   return (
     <>
       <input
         type="hidden"
-        name={FormActionName}
-        value={FormActionIdentifier.ToggleCommentLike}
+        name={FormLiteral.ActionType}
+        value={FormLiteral.ToggleCommentLike}
       />
-      <input
-        type="hidden"
-        name="commentId"
-        value={commentId}
-      />
-      <IconButton
-        type="submit"
-        variant="ghost"
-        color={likedByCurrentUser ? "red.500" : undefined}
-        aria-label='Like comment'
-        icon={(
-          <Heart
-            size={20}
-            style={{ fill: likedByCurrentUser ? "#E53E3E" : undefined }}
-          />
-        )}
-      />
+      <input type="hidden" name="commentId" value={commentId} />
+      <GhostButton type="submit" aria-label="Like Comment">
+        <Heart
+          size={20}
+          className={twMerge(
+            'transition-all duration-300',
+            likedByCurrentUser && 'fill-red-500'
+          )}
+          // style={{ fill: likedByCurrentUser ? '#E53E3E' : undefined }}
+        />
+      </GhostButton>
     </>
-  )
+  );
 }

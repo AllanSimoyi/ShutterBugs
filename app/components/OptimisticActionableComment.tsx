@@ -1,6 +1,4 @@
-import { HStack, Text, useColorMode, VStack } from "@chakra-ui/react";
-import { getLiteTextColor } from "~/lib/text";
-import { ProfilePic } from "./ProfilePic";
+import { ProfilePic } from './ProfilePic';
 
 interface Props {
   userImageId: string;
@@ -8,27 +6,20 @@ interface Props {
   content: string;
 }
 
-export function OptimisticActionableComment (props: Props) {
+export function OptimisticActionableComment(props: Props) {
   const { userImageId, userFullName, content } = props;
 
-  const { colorMode } = useColorMode();
-
   return (
-    <HStack align="center" spacing={4}>
-      <VStack align="stretch" flexShrink={0}>
-        <ProfilePic
-          imageId={userImageId}
-          fullName={userFullName}
-        />
-      </VStack>
-      <VStack align="stretch" spacing={0}>
-        <Text fontSize={{ base: "xs", lg: "sm" }}>
+    <div className="flex flex-row items-center gap-4">
+      <div className="flex shrink-0 flex-col items-stretch">
+        <ProfilePic imageId={userImageId} fullName={userFullName} />
+      </div>
+      <div className="flex flex-col items-stretch gap-0">
+        <span className="text-xs lg:text-sm">
           <b>{userFullName}</b> {content.substring(0, 40)}
-        </Text>
-        <Text fontSize="xs" color={getLiteTextColor(colorMode)}>
-          Processing...
-        </Text>
-      </VStack>
-    </HStack>
-  )
+        </span>
+        <span className="text-xs text-stone-400">Processing...</span>
+      </div>
+    </div>
+  );
 }

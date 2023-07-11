@@ -1,9 +1,8 @@
 import { useCallback, useState } from 'react';
-import {
-  UploadState,
-  uploadToCloudinary,
-  useCloudinary,
-} from 'remix-chakra-reusables';
+
+import { useCloudinary } from '~/components/CloudinaryContextProvider';
+import { UploadState, uploadToCloudinary } from '~/lib/cloudinary';
+import { getErrorMessage } from '~/lib/errors';
 
 interface Props {
   imageIds: string[];
@@ -20,7 +19,7 @@ export interface ImageUploadState {
 }
 
 export function useUploadImages(props: Props) {
-  const { imageIds, ImageUploadSizeLimit } = props;
+  const { imageIds, ImageUploadSizeLimit: SizeLimit } = props;
 
   const { CLOUDINARY_CLOUD_NAME, CLOUDINARY_UPLOAD_RESET } = useCloudinary();
 
@@ -38,12 +37,10 @@ export function useUploadImages(props: Props) {
       try {
         setError('');
 
-        const tooLarge = files.some(
-          (file) => file.size > ImageUploadSizeLimit.Value
-        );
+        const tooLarge = files.some((file) => file.size > SizeLimit.Value);
         if (tooLarge) {
           throw new Error(
-            `Please ensure you upload images less than ${ImageUploadSizeLimit.Caption}`
+            `Please upload images less than ${SizeLimit.Caption}`
           );
         }
 
@@ -57,38 +54,42 @@ export function useUploadImages(props: Props) {
         ]);
 
         const results = await Promise.all(
-          files.map((file) => {
-            return uploadToCloudinary(
+          files.map((file) =>
+            uploadToCloudinary(
               file,
               CLOUDINARY_CLOUD_NAME,
               CLOUDINARY_UPLOAD_RESET
-            );
-          })
+            )
+          )
         );
 
         setImageUploads((prevState) => {
           return [
             ...prevState.filter((imageUpload) => imageUpload.imageId),
             ...results.map((result) => {
-              return result.success
-                ? {
-                    imageId: result.data.publicId,
-                    uploadState: UploadState.Uploaded,
-                    uploadError: '',
-                  }
-                : {
-                    imageId: '',
-                    uploadState: UploadState.Error,
-                    uploadError: result.err.message,
-                  };
+              if (!result.success) {
+                return {
+                  imageId: '',
+                  uploadState: UploadState.Error,
+                  uploadError: result.err.message,
+                };
+              }
+              return {
+                imageId: result.data.publicId,
+                uploadState: UploadState.Uploaded,
+                uploadError: '',
+              };
             }),
           ];
         });
-      } catch ({ message }) {
-        setError(message as string);
+      } catch (error) {
+        setError(
+          getErrorMessage(error) ||
+            'Something went wrong uploading image, please try again'
+        );
       }
     },
-    [CLOUDINARY_CLOUD_NAME, CLOUDINARY_UPLOAD_RESET, ImageUploadSizeLimit]
+    [CLOUDINARY_CLOUD_NAME, CLOUDINARY_UPLOAD_RESET, SizeLimit]
   );
 
   return { imageUploads, setImageUploads, uploadImages, error };

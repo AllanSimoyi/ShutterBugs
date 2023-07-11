@@ -1,71 +1,51 @@
-import { HStack, IconButton, Spacer, Text, useColorMode, VStack } from "@chakra-ui/react";
-import { thumbnail } from "@cloudinary/url-gen/actions/resize";
-import { useCallback, useMemo } from "react";
-import { useCloudinary } from "remix-chakra-reusables";
-import { X } from "tabler-icons-react";
-import { getLiteTextColor } from "~/lib/text";
+import { thumbnail } from '@cloudinary/url-gen/actions/resize';
+import { useMemo } from 'react';
+import { X } from 'tabler-icons-react';
+
+import { useCloudinary } from './CloudinaryContextProvider';
+import { PrimaryButton } from './PrimaryButton';
 
 interface Props {
   isUploading: boolean;
   imageId: string;
-  handleRemove: (imageId: string) => void;
+  handleRemove: () => void;
 }
 
-export function ImageUpload (props: Props) {
+export function ImageUpload(props: Props) {
   const { isUploading, imageId, handleRemove } = props;
 
   const { CloudinaryUtil } = useCloudinary();
-  const { colorMode } = useColorMode();
 
   const imageUrl = useMemo(() => {
     if (imageId) {
-      return CloudinaryUtil
-        .image(imageId)
+      return CloudinaryUtil.image(imageId)
         .resize(thumbnail(240, 240))
         .format('auto')
         .quality('auto')
         .toURL();
     }
-    return "";
+    return '';
   }, [CloudinaryUtil, imageId]);
 
-  const handleRemoveClick = useCallback((_: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
-    handleRemove(imageId);
-  }, [handleRemove, imageId]);
-
   return (
-    <VStack
-      h={isUploading ? undefined : 240}
-      w="100%"
-      borderWidth={1}
-      align="stretch"
-      bgSize="cover"
-      borderRadius={10}
-      bgPosition="center"
-      bgRepeat="no-repeat"
-      bgImage={imageUrl || undefined}
-      borderColor={getLiteTextColor(colorMode)}
+    <div
+      className="flex flex-col items-stretch rounded-md border border-stone-400 bg-cover bg-center bg-repeat"
+      style={{ backgroundImage: imageUrl ? `url('${imageUrl}')` : undefined }}
     >
-      <HStack align="center" p={2}>
-        {isUploading && (
-          <Text fontSize="lg">
-            Uploading...
-          </Text>
-        )}
-        <Spacer />
+      <div className="flex flex-row items-center p-2">
+        {isUploading && <span className="text-lg">Uploading...</span>}
+        <div className="grow" />
         {!isUploading && (
-          <IconButton
-            size={"md"}
-            icon={<X />}
-            color="red.400"
-            bgColor="white"
-            variant="solid"
-            borderRadius={10}
+          <PrimaryButton
+            className="bg-white hover:bg-white/50"
             aria-label="Remove Image"
-            onClick={handleRemoveClick}
-          />
+            onClick={() => handleRemove()}
+            type="button"
+          >
+            <X className="text-red-400" />
+          </PrimaryButton>
         )}
-      </HStack>
-    </VStack>
-  )
+      </div>
+    </div>
+  );
 }

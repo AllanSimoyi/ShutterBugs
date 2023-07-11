@@ -1,43 +1,45 @@
-import type { User } from "@prisma/client";
-import bcrypt from "bcryptjs";
+import type { User } from '@prisma/client';
 
-import { prisma } from "~/db.server";
-import { createPasswordHash } from "./auth.server";
+import bcrypt from 'bcryptjs';
 
-export type { User } from "@prisma/client";
+import { prisma } from '~/db.server';
 
-export async function getUserById (id: User["id"]) {
+import { createPasswordHash } from './auth.server';
+
+export type { User } from '@prisma/client';
+
+export async function getUserById(id: User['id']) {
   return prisma.user.findUnique({ where: { id } });
 }
 
-export async function getUserByEmail (email: User["email"]) {
+export async function getUserByEmail(email: User['email']) {
   return prisma.user.findUnique({ where: { email } });
 }
 
 interface CreateUserProps {
   email: string;
   fullName: string;
-  picId: string;
+  imageId: string;
   password: string;
 }
-export async function createUser (props: CreateUserProps) {
-  const { email, fullName, picId, password } = props;
+export async function createUser(props: CreateUserProps) {
+  const { email, fullName, imageId, password } = props;
 
   return prisma.user.create({
     data: {
       email,
       fullName,
-      picId,
+      imageId,
       hashedPassword: await createPasswordHash(password),
     },
   });
 }
 
-export async function deleteUserByEmail (email: User["email"]) {
+export async function deleteUserByEmail(email: User['email']) {
   return prisma.user.delete({ where: { email } });
 }
 
-export async function verifyLogin (email: User["email"], password: string) {
+export async function verifyLogin(email: User['email'], password: string) {
   const userWithPassword = await prisma.user.findUnique({
     where: { email },
   });
@@ -53,6 +55,7 @@ export async function verifyLogin (email: User["email"], password: string) {
     return null;
   }
 
-  const { hashedPassword: _password, ...userWithoutPassword } = userWithPassword;
+  const { hashedPassword: _password, ...userWithoutPassword } =
+    userWithPassword;
   return userWithoutPassword;
 }

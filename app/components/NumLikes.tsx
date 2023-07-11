@@ -2,15 +2,16 @@ interface Props {
   children: number;
 }
 
-export function NumLikes (props: Props) {
+export function NumLikes(props: Props) {
   const { children } = props;
+
+  if (!children) {
+    return null;
+  }
+
   return (
-    <>
-      {Boolean(children) && (
-        <>
-          <b>{children}</b> {children === 1 ? "like" : "likes"}
-        </>
-      )}
-    </>
-  )
+    <span>
+      <b>{children}</b> {children === 1 ? 'like' : 'likes'}
+    </span>
+  );
 }

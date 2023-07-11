@@ -1,12 +1,10 @@
-import { Spinner, Text, VStack } from "@chakra-ui/react";
+import { Spinner } from '@chakra-ui/react';
 
-export function Posting () {
+export function Posting() {
   return (
-    <VStack justify="center" align="center" p={4} h="100%">
+    <div className="flex h-full flex-col items-center justify-center p-4">
       <Spinner size="lg" />
-      <Text fontSize="lg">
-        Posting...
-      </Text>
-    </VStack>
-  )
+      <span className="text-lg">Posting...</span>
+    </div>
+  );
 }

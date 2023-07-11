@@ -1,10 +1,10 @@
 export const AppLinks = {
   Home: '/',
   Login: '/login',
+  Logout: '/logout',
   Join: '/join',
   CustomerCare: '/customer-care',
   NewPost: '/posts/new',
-  Post: (postId: string) => `/posts/${postId}`,
   Profile: '/profile',
   EditProfile: '/profile/edit',
 };

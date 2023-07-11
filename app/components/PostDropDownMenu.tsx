@@ -1,9 +1,15 @@
-import { IconButton, Menu, MenuButton, MenuItem, MenuList } from "@chakra-ui/react";
-import { DotsVertical } from "tabler-icons-react";
+import {
+  IconButton,
+  Menu,
+  MenuButton,
+  MenuItem,
+  MenuList,
+} from '@chakra-ui/react';
+import { DotsVertical } from 'tabler-icons-react';
 
 interface Props {}
 
-export function PostDropDownMenu (props: Props) {
+export function PostDropDownMenu(_: Props) {
   return (
     <Menu>
       <MenuButton
@@ -14,13 +20,13 @@ export function PostDropDownMenu (props: Props) {
         variant="ghost"
       />
       <MenuList>
-        <MenuItem fontSize={"sm"} py={2}>
+        <MenuItem fontSize={'sm'} py={2}>
           Post Item 1
         </MenuItem>
-        <MenuItem fontSize={"sm"} py={2}>
+        <MenuItem fontSize={'sm'} py={2}>
           Post Item 2
         </MenuItem>
       </MenuList>
     </Menu>
-  )
+  );
 }

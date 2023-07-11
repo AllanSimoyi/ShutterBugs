@@ -2,9 +2,10 @@ import type { ChangeEvent } from 'react';
 
 import { Avatar, keyframes } from '@chakra-ui/react';
 import { useCallback, useMemo, useState } from 'react';
-import { UploadState, useCloudinary } from 'remix-chakra-reusables';
 
-import { FILE_INPUT_STYLE } from '~/lib/constants';
+import { UploadState } from '~/lib/cloudinary';
+
+import { useCloudinary } from './CloudinaryContextProvider';
 
 interface Props {
   identifier: string;
@@ -38,7 +39,6 @@ export function UpdateProfilePic(props: Props) {
         const reader = new FileReader();
         reader.readAsDataURL(event.target.files[0]);
         reader.onload = (e) => {
-          console.log(typeof e.target?.result);
           if (e.target?.result && typeof e.target?.result === 'string') {
             setUploadingImage(e.target?.result);
           }
@@ -61,7 +61,7 @@ export function UpdateProfilePic(props: Props) {
         id={identifier}
         onChange={handleChange}
         disabled={isProcessing}
-        style={FILE_INPUT_STYLE}
+        className="invisible absolute left-0 top-0 opacity-0"
       />
       {uploadState !== UploadState.Uploading && (
         <label htmlFor={identifier}>

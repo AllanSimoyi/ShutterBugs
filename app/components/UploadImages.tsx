@@ -1,78 +1,66 @@
-import { Divider, useToast, VStack } from "@chakra-ui/react";
-import type { ChangeEvent } from "react";
-import { useCallback, useEffect } from "react";
-import { CustomAlert, RecordsNotFound, UploadState, useField } from "remix-chakra-reusables";
-import type { ImageUploadState } from "~/hooks/useUploadImages";
-import { AddImage } from "./AddImage";
-import { ImageUpload } from "./ImageUpload";
+import type { ChangeEvent } from 'react';
+import type { ImageUploadState } from '~/hooks/useUploadImages';
 
-interface Props {
-  imageUploads: ImageUploadState[]
-  setImageUploads: React.Dispatch<React.SetStateAction<ImageUploadState[]>>
-  uploadImages: (files: File[]) => Promise<void>
-  error: string
+import { Divider } from '@chakra-ui/react';
+import { useCallback } from 'react';
+
+import { UploadState } from '~/lib/cloudinary';
+
+import { useField } from './ActionContextProvider';
+import { AddImage } from './AddImage';
+import { EmptyList } from './EmptyList';
+import { ImageUpload } from './ImageUpload';
+import { InlineAlert } from './InlineAlert';
+
+interface Props extends ImageUploadState {
+  removeImage: () => void;
+  uploadImage: (files: File) => Promise<void>;
 }
 
-export function UploadImages (props: Props) {
-  const { imageUploads, setImageUploads, uploadImages, error } = props;
+export function UploadImages(props: Props) {
+  const { imageId, uploadState, uploadError, removeImage, uploadImage } = props;
 
-  const toast = useToast();
-  const { error: imageIdErrors } = useField("imageIds");
+  const { error: imageIdErrors } = useField('imageId');
 
-  useEffect(() => {
-    if (error) {
-      toast({
-        title: error,
-        status: "error",
-        isClosable: true,
-      });
-    }
-  }, [error, toast]);
+  const joinedErrors = [imageIdErrors?.join(', ') || '', uploadError]
+    .filter(Boolean)
+    .join(', ');
 
-  const handleChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files) {
-      uploadImages(Array.from(event.target.files));
-    }
-  }, [uploadImages]);
-
-  const handleRemove = useCallback((imageId: string) => {
-    setImageUploads(prevState => {
-      return prevState.filter(el => el.imageId !== imageId);
-    });
-  }, [setImageUploads]);
+  const handleChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      if (event.target.files) {
+        const arr = Array.from(event.target.files);
+        if (arr.length) {
+          uploadImage(arr[0]);
+        }
+      }
+    },
+    [uploadImage]
+  );
 
   return (
-    <VStack position="relative" align="stretch" flexGrow={1} spacing={0}>
-      <VStack justify="center" align="stretch" flexGrow={1} p={4}>
-        {imageIdErrors?.length && (
-          <CustomAlert status={"error"}>
-            {imageIdErrors.join(", ")}
-          </CustomAlert>
-        )}
-        {!imageUploads.length && (
+    <div className="relative flex grow flex-col items-stretch gap-0 divide-y divide-stone-400">
+      <div className="flex grow flex-col items-stretch justify-center p-4">
+        {!!joinedErrors && <InlineAlert>{joinedErrors}</InlineAlert>}
+        {!imageId && (
           <label htmlFor="file">
-            <RecordsNotFound>
-              No images selected yet
-            </RecordsNotFound>
+            <EmptyList message="No image selected yet" />
           </label>
         )}
-        {imageUploads.length && (
-          <VStack align="stretch" flexGrow={1} overflowY="auto">
-            {imageUploads.map((imageUpload, index) => (
-              <ImageUpload
-                key={index}
-                handleRemove={handleRemove}
-                imageId={imageUpload.imageId}
-                isUploading={imageUpload.uploadState === UploadState.Uploading}
-              />
-            ))}
-          </VStack>
+        {!!imageId && (
+          <div className="flex grow flex-col items-stretch overflow-y-auto">
+            <ImageUpload
+              handleRemove={removeImage}
+              imageId={imageId}
+              isUploading={uploadState === UploadState.Uploading}
+            />
+          </div>
         )}
-      </VStack>
+      </div>
       <Divider />
-      <VStack align="stretch" p={4} bg="transparent">
+      <div className="flex flex-col items-stretch bg-transparent p-4">
         <AddImage handleChange={handleChange} />
-      </VStack>
-    </VStack>
-  )
+      </div>
+    </div>
+  );
 }

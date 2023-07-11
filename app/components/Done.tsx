@@ -1,16 +1,10 @@
-import { Text, VStack } from "@chakra-ui/react";
-import { Check } from "tabler-icons-react";
+import { Check } from 'tabler-icons-react';
 
-export function Done () {
+export function Done() {
   return (
-    <VStack justify="center" align="center" p={4} h="100%">
-      <Check
-        size={40}
-        color={"green"}
-      />
-      <Text fontSize="lg">
-        Upload Done
-      </Text>
-    </VStack>
-  )
+    <div className="flex h-full flex-col items-center justify-center p-4">
+      <Check size={40} color={'green'} />
+      <span className="text-lg">Upload Done</span>
+    </div>
+  );
 }

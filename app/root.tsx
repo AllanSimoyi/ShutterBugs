@@ -4,8 +4,6 @@ import {
   ChakraProvider,
   cookieStorageManagerSSR,
   localStorageManager,
-  useColorMode,
-  VStack,
 } from '@chakra-ui/react';
 import { Cloudinary } from '@cloudinary/url-gen';
 import { withEmotionCache } from '@emotion/react';
@@ -20,18 +18,18 @@ import {
   useLoaderData,
 } from '@remix-run/react';
 import React, { useContext, useEffect, useMemo } from 'react';
-import { CloudinaryContextProvider } from 'remix-chakra-reusables';
 
-import { CustomRootBoundaryError } from './components/CustomComponents';
+import { CloudinaryContextProvider } from './components/CloudinaryContextProvider';
 import { ClientStyleContext, ServerStyleContext } from './context';
 import { PRODUCT_NAME } from './lib/constants';
+import { AppLinks } from './lib/links';
 import { getUser } from './session.server';
 import customStylesUrl from './styles/custom.css';
 import tailwindStylesheetUrl from './styles/tailwind.css';
 import theme from './theme';
 
 export const meta: MetaFunction = () => {
-  const description = 'Home of enthusiastic photographers';
+  const description = 'Organize, group, collaborate, share, great photography';
   return {
     charset: 'utf-8',
     title: PRODUCT_NAME,
@@ -52,7 +50,7 @@ export let links: LinksFunction = () => {
   return [
     {
       rel: 'stylesheet',
-      href: 'https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&display=swap',
+      href: 'https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&display=swap',
     },
     { rel: 'stylesheet', href: tailwindStylesheetUrl },
     { rel: 'stylesheet', href: customStylesUrl },
@@ -80,7 +78,8 @@ const Document = withEmotionCache(
       });
       // reset cache to reapply global styles
       clientStyleData?.reset();
-    }, []);
+    }, [clientStyleData, emotionCache.sheet]);
+    // }, []);
 
     return (
       <html lang="en" className="h-full">
@@ -117,48 +116,30 @@ export async function loader({ request }: LoaderArgs) {
   return json({ user, CLOUD_NAME, UPLOAD_RESET, cookies });
 }
 
-function Bg({ children }: { children: React.ReactNode }) {
-  const { colorMode } = useColorMode();
-  return (
-    <VStack
-      align="stretch"
-      minH="100vh"
-      bgColor={colorMode === 'light' ? 'blackAlpha.100' : 'blackAlpha.700'}
-    >
-      {children}
-    </VStack>
-  );
-}
-
 export default function App() {
   const { CLOUD_NAME, UPLOAD_RESET, cookies } = useLoaderData<typeof loader>();
 
   const CloudinaryUtil = useMemo(() => {
-    return new Cloudinary({
-      cloud: {
-        cloudName: CLOUD_NAME,
-      },
-    });
+    return new Cloudinary({ cloud: { cloudName: CLOUD_NAME } });
   }, [CLOUD_NAME]);
+
+  const colorMode = useMemo(
+    () =>
+      typeof cookies === 'string'
+        ? cookieStorageManagerSSR(cookies)
+        : localStorageManager,
+    [cookies]
+  );
 
   return (
     <Document>
-      <ChakraProvider
-        theme={theme}
-        colorModeManager={
-          typeof cookies === 'string'
-            ? cookieStorageManagerSSR(cookies)
-            : localStorageManager
-        }
-      >
+      <ChakraProvider theme={theme} colorModeManager={colorMode}>
         <CloudinaryContextProvider
           CLOUDINARY_CLOUD_NAME={CLOUD_NAME}
           CLOUDINARY_UPLOAD_RESET={UPLOAD_RESET}
           CloudinaryUtil={CloudinaryUtil}
         >
-          <Bg>
-            <Outlet />
-          </Bg>
+          <Outlet />
         </CloudinaryContextProvider>
       </ChakraProvider>
     </Document>
@@ -174,7 +155,31 @@ export function ErrorBoundary({ error }: { error: Error }) {
         <Links />
       </head>
       <body>
-        <CustomRootBoundaryError error={error} />
+        <div className="flex min-h-screen flex-col items-center justify-center">
+          <div className="space-y-2 rounded-lg p-6 shadow-md">
+            <h1 className="text-xl font-bold">
+              Error 500 - Internal Server Error
+            </h1>
+            <p>
+              We encountered an unexpected error. We're already working on
+              fixing it. <br />
+              {error.message && (
+                <div className="py-2 font-bold">
+                  Detail: "{error.message}" <br />
+                </div>
+              )}
+              Please try reloading the page. <br />
+              If the issue pesists,{' '}
+              <a
+                className="text-blue-500 underline"
+                href={AppLinks.CustomerCare}
+              >
+                contact Customer Care
+              </a>
+              .
+            </p>
+          </div>
+        </div>
         <Scripts />
       </body>
     </html>

@@ -1,10 +1,12 @@
-import { HStack, Spacer, Text, useColorMode, useToast, VStack } from "@chakra-ui/react";
-import { getLiteTextColor } from "~/lib/text";
-import { NumLikes } from "./NumLikes";
-import { ProfilePic } from "./ProfilePic";
-import { LikeComment } from "./LikeComment";
-import { useFetcher } from "@remix-run/react";
-import { useEffect } from "react";
+import { useToast } from '@chakra-ui/react';
+import { useFetcher } from '@remix-run/react';
+import { useEffect } from 'react';
+
+import { hasErrorMessage } from '~/lib/forms';
+
+import { LikeComment } from './LikeComment';
+import { NumLikes } from './NumLikes';
+import { ProfilePic } from './ProfilePic';
 
 interface Props {
   id: string;
@@ -16,57 +18,60 @@ interface Props {
   createdAt: string;
 }
 
-export function ActionableComment (props: Props) {
-  const { id, userImageId, userFullName, content, numLikes, likedByCurrentUser, createdAt } = props;
+export function ActionableComment(props: Props) {
+  const {
+    id,
+    userImageId,
+    userFullName,
+    content,
+    numLikes,
+    likedByCurrentUser,
+    createdAt,
+  } = props;
 
-  const { colorMode } = useColorMode();
   const fetcher = useFetcher();
   const toast = useToast();
 
-  const isTogglingLike = fetcher.state === "submitting" ||
-    fetcher.state === "loading";
+  const isTogglingLike = fetcher.state !== 'idle';
 
-  const effectiveNumLikes = isTogglingLike ?
-    likedByCurrentUser ?
-      numLikes - 1 :
-      numLikes + 1 :
-    numLikes;
+  const effectiveNumLikes = isTogglingLike
+    ? likedByCurrentUser
+      ? numLikes - 1
+      : numLikes + 1
+    : numLikes;
 
   useEffect(() => {
-    if (fetcher.data?.errorMessage) {
+    if (hasErrorMessage(fetcher.data)) {
       toast({
         title: fetcher.data.errorMessage,
-        status: "error",
+        status: 'error',
         isClosable: true,
       });
     }
   }, [fetcher.data, toast]);
 
   return (
-    <HStack align="center" spacing={4}>
-      <VStack align="stretch" flexShrink={0}>
-        <ProfilePic
-          imageId={userImageId}
-          fullName={userFullName}
-        />
-      </VStack>
-      <VStack align="stretch" spacing={0}>
-        <Text fontSize={{ base: "xs", lg: "sm" }}>
+    <div className="flex flex-row items-center gap-4">
+      <div className="flex shrink-0 flex-col items-stretch">
+        <ProfilePic imageId={userImageId} fullName={userFullName} />
+      </div>
+      <div className="flex flex-col items-stretch gap-0">
+        <span className="text-xs lg:text-sm">
           <b>{userFullName}</b> {content.substring(0, 40)}
-        </Text>
-        <Text fontSize="xs" color={getLiteTextColor(colorMode)}>
+        </span>
+        <span className="text-xs text-stone-400">
           {createdAt} &middot; <NumLikes>{effectiveNumLikes}</NumLikes>
-        </Text>
-      </VStack>
-      <Spacer />
+        </span>
+      </div>
+      <div className="grow" />
       <fetcher.Form method="post">
         <LikeComment
           commentId={id}
-          likedByCurrentUser={isTogglingLike ?
-            !likedByCurrentUser :
-            likedByCurrentUser}
+          likedByCurrentUser={
+            isTogglingLike ? !likedByCurrentUser : likedByCurrentUser
+          }
         />
       </fetcher.Form>
-    </HStack>
-  )
+    </div>
+  );
 }

@@ -1,48 +1,45 @@
-import type { StackProps } from "@chakra-ui/react";
-import { Button, HStack, Input } from "@chakra-ui/react";
+import type { ComponentProps } from 'react';
 import 'react-gallery-carousel/dist/index.css';
-import { FormActionIdentifier, FormActionName } from "~/lib/forms.validations";
 
-interface Props extends StackProps {
+import { twMerge } from 'tailwind-merge';
+
+import { FormLiteral } from '~/lib/forms';
+
+import { FormTextField } from './FormTextField';
+import { GhostButton } from './GhostButton';
+
+interface Props extends ComponentProps<'div'> {
   postId: string;
   isSubmitting: boolean;
   commentRef: React.RefObject<HTMLInputElement>;
 }
 
-export function CommentOnPost (props: Props) {
-  const { postId, isSubmitting, commentRef, ...restOfProps } = props;
+export function CommentOnPost(props: Props) {
+  const { postId, isSubmitting, commentRef, className, ...restOfProps } = props;
 
   return (
-    <HStack align="stretch" py={2} px={0} {...restOfProps}>
+    <div
+      className={twMerge('flex flex-col items-stretch px-0 py-2', className)}
+      {...restOfProps}
+    >
       <input
         type="hidden"
-        name={FormActionName}
-        value={FormActionIdentifier.Comment}
+        name={FormLiteral.ActionType}
+        value={FormLiteral.Comment}
       />
-      <input
-        type="hidden"
-        name="postId"
-        value={postId}
-      />
-      <Input
-        p={0}
+      <input type="hidden" name="postId" value={postId} />
+      <FormTextField
+        className="p-0 text-sm"
         ref={commentRef}
         type="text"
         name="content"
-        variant="unstyled"
-        fontSize="sm"
-        placeholder='Add a comment...'
-        isDisabled={isSubmitting}
-        isRequired
+        placeholder="Add a comment..."
+        disabled={isSubmitting}
+        required
       />
-      <Button
-        type="submit"
-        variant="ghost"
-        fontSize="sm"
-        isDisabled={isSubmitting}
-      >
-        {isSubmitting ? "Posting..." : "Post"}
-      </Button>
-    </HStack>
-  )
+      <GhostButton type="submit" className="text-sm" disabled={isSubmitting}>
+        {isSubmitting ? 'Posting...' : 'Post'}
+      </GhostButton>
+    </div>
+  );
 }

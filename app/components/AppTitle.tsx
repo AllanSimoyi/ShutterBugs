@@ -1,0 +1,7 @@
+interface Props {
+  title: string;
+}
+
+export function AppTitle({ title }: Props) {
+  return <h1 className="font- text-lg text-stone-600">{title}</h1>;
+}

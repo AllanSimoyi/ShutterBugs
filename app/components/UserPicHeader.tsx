@@ -1,6 +1,5 @@
-import { HStack, Text, VStack } from "@chakra-ui/react";
-import { NumLikes } from "./NumLikes";
-import { ProfilePic } from "./ProfilePic";
+import { NumLikes } from './NumLikes';
+import { ProfilePic } from './ProfilePic';
 
 export interface UserPicHeaderProps {
   userImageId: string;
@@ -8,25 +7,18 @@ export interface UserPicHeaderProps {
   numLikes: number;
 }
 
-export function UserPicHeader (props: UserPicHeaderProps) {
+export function UserPicHeader(props: UserPicHeaderProps) {
   const { userImageId, userFullName, numLikes } = props;
 
   return (
-    <HStack align="center" spacing={4}>
-      <ProfilePic
-        imageId={userImageId}
-        fullName={userFullName}
-      />
-      <VStack align="flex-start" spacing={0}>
-        <Text fontSize="sm" fontWeight="bold">
-          {userFullName}
-        </Text>
-        <Text fontSize="sm">
-          <NumLikes>
-            {numLikes}
-          </NumLikes>
-        </Text>
-      </VStack>
-    </HStack>
-  )
+    <div className="flex flex-row items-center gap-4">
+      <ProfilePic imageId={userImageId} fullName={userFullName} />
+      <div className="flex flex-col items-start gap-0">
+        <span className="text-sm font-bold">{userFullName}</span>
+        <span className="text-sm">
+          <NumLikes>{numLikes}</NumLikes>
+        </span>
+      </div>
+    </div>
+  );
 }

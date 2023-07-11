@@ -3,44 +3,26 @@ import type {
   LinksFunction,
   LoaderArgs,
 } from '@remix-run/server-runtime';
-import type { CustomActionData, Result } from 'remix-chakra-reusables';
 
-import {
-  Divider,
-  Heading,
-  HStack,
-  IconButton,
-  Spacer,
-  useColorMode,
-  useToast,
-  VStack,
-} from '@chakra-ui/react';
+import { useToast } from '@chakra-ui/react';
 import { useFetcher, useLoaderData, useNavigate } from '@remix-run/react';
 import { json } from '@remix-run/server-runtime';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import carouselUrl from 'react-gallery-carousel/dist/index.css';
-import {
-  ActionContextProvider,
-  badRequest,
-  CenteredView,
-  formResultProps,
-  getRawFormFields,
-  processBadRequest,
-} from 'remix-chakra-reusables';
-import { ArrowNarrowLeft, ArrowNarrowRight, Check } from 'tabler-icons-react';
 import { z } from 'zod';
 
-import {
-  CustomCatchBoundary,
-  CustomErrorBoundary,
-} from '~/components/CustomComponents';
+import { ActionContextProvider } from '~/components/ActionContextProvider';
+import { RouteErrorBoundary } from '~/components/Boundaries';
+import { CenteredView } from '~/components/CenteredView';
 import { Done } from '~/components/Done';
-import { ImageUploadMetaData } from '~/components/ImageUploadMetaData';
+import { InlineAlert } from '~/components/InlineAlert';
 import { Posting } from '~/components/Posting';
 import { Toolbar } from '~/components/Toolbar';
 import { UploadImages } from '~/components/UploadImages';
 import { prisma } from '~/db.server';
-import { useUploadImages } from '~/hooks/useUploadImages';
+import { useUploadImage } from '~/hooks/useUploadImage';
+import { processBadRequest } from '~/lib/core.validations';
+import { getRawFormFields, hasFormError } from '~/lib/forms';
 import { AppLinks } from '~/lib/links';
 import { ImageUploadSizeLimit } from '~/lib/post.server';
 import { requireUser, requireUserId } from '~/session.server';
@@ -55,109 +37,59 @@ export async function loader({ request }: LoaderArgs) {
   return json({ ImageUploadSizeLimit });
 }
 
-const ImageIdsSchema = z.array(z.string().min(1).max(100));
-
 const Schema = z.object({
-  imageIds: z.preprocess((arg) => {
-    if (typeof arg === 'string') {
-      return JSON.parse(arg);
-    }
-  }, ImageIdsSchema),
-  description: z.string().max(1600),
+  imageId: z.string().min(1).max(100),
 });
 
 export async function action({ request }: ActionArgs) {
   const currentUserId = await requireUserId(request);
-  const fields = await getRawFormFields(request);
 
-  const result = await Schema.safeParseAsync(fields);
+  const fields = await getRawFormFields(request);
+  const result = Schema.safeParse(fields);
   if (!result.success) {
     return processBadRequest(result.error, fields);
   }
-  const { imageIds, description } = result.data;
-
-  if (!imageIds.length) {
-    return badRequest({
-      fields,
-      fieldErrors: {
-        imageIds: ['Upload at least 1 image'],
-      },
-      formError: undefined,
-    });
-  }
+  const { imageId } = result.data;
 
   const post = await prisma.post.create({
     data: {
       userId: currentUserId,
-      description,
-      images: {
-        create: imageIds.map((imageId) => ({
-          imageId,
-        })),
-      },
+      imageId,
     },
-    select: {
-      id: true,
-    },
+    select: { id: true },
   });
 
-  return json({ success: true, data: { postId: post.id } });
+  return json({ postId: post.id });
 }
-
-enum Screen {
-  Images = 'Images',
-  MetaData = 'MetaData',
-}
-
-type Ok = { success: true; postId: string };
-type Err = CustomActionData<typeof Schema>;
 
 export default function NewPost() {
   const currentUser = useUser();
 
   const { ImageUploadSizeLimit } = useLoaderData<typeof loader>();
-  const fetcher = useFetcher<Result<Ok, Err>>();
+  const fetcher = useFetcher<typeof action>();
 
   const toast = useToast();
   const navigate = useNavigate();
-  const { colorMode } = useColorMode();
 
-  const [currentScreen, setCurrentScreen] = useState<Screen>(Screen.Images);
-
-  const imageUploadTools = useUploadImages({
-    imageIds: [],
+  const imageUploadTools = useUploadImage({
+    imageId: '',
     ImageUploadSizeLimit,
   });
 
-  const previousIsDisabled = useMemo(() => {
-    return currentScreen === Screen.Images;
-  }, [currentScreen]);
+  const isPosting = fetcher.state !== 'idle';
 
-  const handlePreviousClick = useCallback(() => {
-    setCurrentScreen((prevState) => {
-      if (prevState === Screen.MetaData) {
-        return Screen.Images;
-      }
-      return prevState;
-    });
-  }, []);
-
-  const handleNextClick = useCallback(() => {
-    if (currentScreen === Screen.Images) {
-      setCurrentScreen(Screen.MetaData);
+  const postId = useMemo(() => {
+    const result = z.object({ postId: z.string() }).safeParse(fetcher.data);
+    if (!result.success) {
+      return undefined;
     }
-  }, [currentScreen]);
-
-  const isPosting =
-    fetcher.state === 'submitting' || fetcher.state === 'loading';
-
-  const isDone = fetcher.data?.success;
-  const postId = fetcher.data?.success ? fetcher.data.data.postId : undefined;
+    return result.data.postId;
+  }, [fetcher.data]);
 
   useEffect(() => {
-    if (!fetcher.data?.success && fetcher.data?.err.formError) {
+    if (hasFormError(fetcher.data)) {
       toast({
-        title: fetcher.data?.err.formError,
+        title: fetcher.data.formError,
         status: 'error',
         isClosable: true,
       });
@@ -165,122 +97,47 @@ export default function NewPost() {
   }, [toast, fetcher.data]);
 
   useEffect(() => {
-    if (
-      !fetcher.data?.success &&
-      (fetcher.data?.err.fieldErrors?.imageIds ||
-        fetcher.data?.err.fieldErrors?.description)
-    ) {
-      setCurrentScreen(Screen.Images);
-    }
-  }, [toast, fetcher.data]);
-
-  useEffect(() => {
     if (postId) {
-      setTimeout(() => {
-        return navigate(AppLinks.Post(postId));
-      }, 2500);
+      setTimeout(() => navigate(AppLinks.Home), 2500);
     }
   }, [postId, navigate]);
 
   return (
     <fetcher.Form method="post" style={{ height: '100vh' }}>
-      <ActionContextProvider
-        {...formResultProps(fetcher.data)}
-        isSubmitting={isPosting}
-      >
-        <VStack align="stretch" h="100vh">
-          <Toolbar
-            currentUserName={currentUser.fullName}
-            hideSearchOnMobile={true}
-          />
-          <CenteredView
-            flexGrow={1}
-            px={{ base: 0, lg: 4 }}
-            w={{ base: '100%', md: '60%', lg: '40%' }}
-          >
-            <VStack
-              flexGrow={1}
-              shadow="md"
-              spacing={0}
-              align="stretch"
-              borderRadius={10}
-              overflow="hidden"
-              backdropFilter="saturate(180%) blur(5px)"
-              bgColor={colorMode === 'light' ? 'white' : 'whiteAlpha.200'}
-            >
-              <HStack justify="center" align="center" py={4} px={0}>
-                <IconButton
-                  size={{ base: 'lg', lg: 'sm' }}
-                  variant="ghost"
-                  borderRadius={10}
-                  icon={<ArrowNarrowLeft />}
-                  aria-label="Previous Screen"
-                  onClick={handlePreviousClick}
-                  visibility={previousIsDisabled ? 'hidden' : 'visible'}
-                />
-                <Spacer />
-                <Heading size="md">
-                  {!isPosting && !isDone && (
-                    <>
-                      {currentScreen === Screen.Images && 'Select Images'}
-                      {currentScreen === Screen.MetaData && 'Details'}
-                    </>
-                  )}
+      <ActionContextProvider {...fetcher.data} isSubmitting={isPosting}>
+        <div className="flex h-full flex-col items-stretch">
+          <Toolbar currentUserName={currentUser.fullName} />
+          <CenteredView className="w-full grow px-0 md:w-[60%] lg:w-[40%] lg:px-4">
+            <div className="flex grow flex-col items-stretch gap-0 overflow-hidden rounded-md bg-white/50 shadow-md backdrop-blur-sm">
+              <div className="flex flex-row items-center justify-center px-0 py-4">
+                <h3 className="text-lg font-semibold">
+                  {!isPosting && !postId && 'Upload Image'}
                   {isPosting && 'Posting...'}
-                  {isDone && 'Upload Done'}
-                </Heading>
-                <Spacer />
-                {currentScreen !== Screen.MetaData && (
-                  <IconButton
-                    size={{ base: 'lg', lg: 'sm' }}
-                    variant="ghost"
-                    borderRadius={10}
-                    aria-label="Next Screen"
-                    onClick={handleNextClick}
-                    icon={<ArrowNarrowRight />}
-                  />
-                )}
-                {currentScreen === Screen.MetaData && (
-                  <IconButton
-                    size={{ base: 'lg', lg: 'sm' }}
-                    type="submit"
-                    variant="ghost"
-                    borderRadius={10}
-                    aria-label="Create Post"
-                    icon={<Check />}
-                  />
-                )}
-              </HStack>
-              <Divider />
-              <VStack align="stretch" flexGrow={1}>
+                  {!!postId && 'Upload Done'}
+                </h3>
+              </div>
+              <div className="grow" />
+              <div className="flex grow flex-col items-stretch">
                 <input
                   type="hidden"
-                  name="imageIds"
-                  value={JSON.stringify(
-                    imageUploadTools.imageUploads.map(
-                      (imageUpload) => imageUpload.imageId
-                    )
-                  )}
+                  name="imageId"
+                  value={imageUploadTools.imageId}
                 />
-                {currentScreen === Screen.Images && (
-                  <UploadImages {...imageUploadTools} />
-                )}
-                {currentScreen === Screen.MetaData && <ImageUploadMetaData />}
                 {isPosting && <Posting />}
-                {isDone && <Done />}
-              </VStack>
-            </VStack>
+                {!!postId && <Done />}
+                {hasFormError(fetcher.data) && (
+                  <InlineAlert>{fetcher.data.formError}</InlineAlert>
+                )}
+                <UploadImages {...imageUploadTools} />
+              </div>
+            </div>
           </CenteredView>
-        </VStack>
+        </div>
       </ActionContextProvider>
     </fetcher.Form>
   );
 }
 
-export function CatchBoundary() {
-  return <CustomCatchBoundary />;
-}
-
-export function ErrorBoundary({ error }: { error: Error }) {
-  return <CustomErrorBoundary error={error} />;
+export function ErrorBoundary() {
+  return <RouteErrorBoundary />;
 }

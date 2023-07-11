@@ -8,84 +8,25 @@ generator client {
 }
 
 model User {
-  id       String @id @default(cuid())
-  email    String @unique
-  fullName String
-  picId    String
+  id             String @id @default(cuid())
+  email          String @unique
+  fullName       String
+  imageId        String
+  hashedPassword String
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  hashedPassword String
-
-  posts        Post[]
-  postLikes    PostLike[]
-  comments     Comment[]
-  commentLikes CommentLike[]
+  posts Post[]
 }
 
 model Post {
-  id          String @id @default(cuid())
-  description String @db.VarChar(1600)
+  id      String @id @default(cuid())
+  imageId String
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  userId String
-
-  images   PostImage[]
-  likes    PostLike[]
-  comments Comment[]
-}
-
-model PostImage {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  imageId String
-
-  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  postId String
-}
-
-model PostLike {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  postId String
-
-  user   User   @relation(fields: [userId], references: [id])
-  userId String
-}
-
-model Comment {
-  id      String @id @default(cuid())
-  content String
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  postId String
-
-  user   User   @relation(fields: [userId], references: [id])
-  userId String
-
-  likes CommentLike[]
-}
-
-model CommentLike {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  comment   Comment @relation(fields: [commentId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  commentId String  @default("")
-
-  user   User   @relation(fields: [userId], references: [id])
   userId String
 }

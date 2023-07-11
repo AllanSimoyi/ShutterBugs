@@ -1,33 +1,17 @@
 import type { LinksFunction, LoaderArgs } from '@remix-run/node';
-import type { ActionArgs } from '@remix-run/server-runtime';
 
-import { SimpleGrid, VStack } from '@chakra-ui/react';
 import { useLoaderData } from '@remix-run/react';
 import { json } from '@remix-run/server-runtime';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import carouselUrl from 'react-gallery-carousel/dist/index.css';
-import {
-  CenteredView,
-  Footer,
-  getRawFormFields,
-  StatusCode,
-} from 'remix-chakra-reusables';
 
+import { CenteredView } from '~/components/CenteredView';
+import { Footer } from '~/components/Footer';
 import { PostCard } from '~/components/PostCard';
 import { Toolbar } from '~/components/Toolbar';
 import { prisma } from '~/db.server';
 import { PRODUCT_NAME } from '~/lib/constants';
-import {
-  FormActionIdentifier,
-  FormActionSchema,
-} from '~/lib/forms.validations';
-import {
-  flattenErrors,
-  handlePostComment,
-  handleTogglePostLike,
-} from '~/lib/post.server';
-import { getUserId, requireUserId } from '~/session.server';
 import { useOptionalUser } from '~/utils';
 
 dayjs.extend(relativeTime);
@@ -36,153 +20,57 @@ export let links: LinksFunction = () => {
   return [{ rel: 'stylesheet', href: carouselUrl }];
 };
 
-const ITEMS_PER_PAGE = 40;
+const ITEMS_PER_PAGE = 10;
 
-function fetchPosts(currentUserId: string | undefined) {
-  return prisma.post.findMany({
-    take: ITEMS_PER_PAGE,
-    select: {
-      id: true,
-      user: {
-        select: {
-          picId: true,
-          fullName: true,
-        },
+export async function loader(_: LoaderArgs) {
+  const posts = await prisma.post
+    .findMany({
+      take: ITEMS_PER_PAGE,
+      select: {
+        id: true,
+        imageId: true,
+        createdAt: true,
+        user: { select: { id: true, imageId: true, fullName: true } },
       },
-      likes: {
-        take: 1,
-        where: {
-          userId: currentUserId,
-        },
-        select: {
-          id: true,
-        },
-      },
-      comments: {
-        take: 2,
-        orderBy: {
-          createdAt: 'desc',
-        },
-        select: {
-          id: true,
-          user: {
-            select: {
-              fullName: true,
-            },
-          },
-          content: true,
-        },
-      },
-      _count: {
-        select: {
-          likes: true,
-          comments: true,
-        },
-      },
-      description: true,
-      images: {
-        select: {
-          imageId: true,
-        },
-      },
-      createdAt: true,
-    },
-    orderBy: {
-      createdAt: 'desc',
-    },
-  });
-}
-function getDeveloperLink() {
-  const developerLink = process.env.DEVELOPER_WEBSITE_LINK;
-  if (!developerLink) {
-    throw new Response('Developer website link is missing', {
-      status: StatusCode.NotFound,
-    });
-  }
-  return developerLink;
-}
-async function refreshPageData(currentUserId: string | undefined) {
-  const posts = await fetchPosts(currentUserId);
-
-  const contextualizedPosts = posts.map((post) => ({
-    ...post,
-    likedByCurrentUser: currentUserId ? post.likes.length > 0 : false,
-    createdAt: dayjs(post.createdAt).fromNow(),
-  }));
-
-  return {
-    developerLink: getDeveloperLink(),
-    posts: contextualizedPosts,
-  };
-}
-
-export async function loader({ request }: LoaderArgs) {
-  const currentUserId = await getUserId(request);
-  const data = await refreshPageData(currentUserId);
-  return json(data);
-}
-
-export async function action({ request }: ActionArgs) {
-  const currentUserId = await requireUserId(request);
-  const fields = await getRawFormFields(request);
-
-  const result = await FormActionSchema.safeParseAsync(fields);
-  if (!result.success) {
-    const { fieldErrors, formErrors } = result.error.flatten();
-    const errorMessage = flattenErrors({ fieldErrors, formErrors });
-    return json({ errorMessage });
-  }
-  const { _action } = result.data;
-
-  if (_action === FormActionIdentifier.Comment) {
-    return handlePostComment(fields, currentUserId);
-  }
-  if (_action === FormActionIdentifier.TogglePostLike) {
-    return handleTogglePostLike(fields, currentUserId);
-  }
-  return json({ errorMessage: 'Invalid form action provided' });
+      orderBy: { createdAt: 'desc' },
+    })
+    .then((posts) =>
+      posts.map((post) => ({
+        ...post,
+        createdAt: dayjs(post.createdAt).fromNow(),
+      }))
+    );
+  return json({ posts });
 }
 
 export default function Index() {
   const user = useOptionalUser();
-  const { developerLink, posts } = useLoaderData<typeof loader>();
+  const { posts } = useLoaderData<typeof loader>();
 
   return (
-    <VStack align="stretch" minH="100vh">
+    <div className="flex min-h-full flex-col items-stretch">
       <Toolbar currentUserName={user?.fullName || ''} />
-      <VStack align="stretch" flexGrow={1} py={8}>
-        <CenteredView px={{ base: 0, lg: 4 }}>
-          <SimpleGrid columns={{ sm: 1, md: 2, lg: 4 }} spacing={12}>
+      <div className="flex grow flex-col items-stretch py-12">
+        <CenteredView className="px-2">
+          <div className="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-3">
             {posts.map((post) => (
-              <VStack align="stretch" key={post.id}>
+              <div key={post.id} className="flex flex-col items-stretch">
                 <PostCard
-                  currentUserId={user?.id}
-                  currentUserFullName={user?.fullName}
                   postId={post.id}
-                  userImageId={post.user.picId}
-                  userFullName={post.user.fullName}
-                  numLikes={post._count.likes}
-                  likedByCurrentUser={post.likedByCurrentUser}
-                  lastComments={post.comments.map((comment) => ({
-                    id: comment.id,
-                    userFullName: comment.user.fullName,
-                    content: comment.content,
-                  }))}
-                  numComments={post._count.comments}
-                  description={post.description}
-                  imageIds={post.images.map((image) => image.imageId)}
+                  imageId={post.imageId}
                   createdAt={post.createdAt}
+                  owner={{
+                    id: post.user.id,
+                    imageId: post.user.imageId,
+                    name: post.user.fullName,
+                  }}
                 />
-              </VStack>
+              </div>
             ))}
-          </SimpleGrid>
+          </div>
         </CenteredView>
-      </VStack>
-      <Footer
-        appTitle={PRODUCT_NAME}
-        developerName={'Allan Simoyi'}
-        developerLink={developerLink}
-      />
-    </VStack>
+      </div>
+      <Footer appTitle={PRODUCT_NAME} />
+    </div>
   );
 }
