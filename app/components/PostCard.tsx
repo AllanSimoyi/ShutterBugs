@@ -1,4 +1,3 @@
-import { Avatar } from '@chakra-ui/react';
 import { fill } from '@cloudinary/url-gen/actions/resize';
 import { byRadius } from '@cloudinary/url-gen/actions/roundCorners';
 import { useMemo } from 'react';
@@ -48,10 +47,14 @@ export function PostCard(props: Props) {
     >
       <div className="grow" />
       <div className="flex flex-row items-center gap-4 p-4 text-white">
-        <Avatar name={owner.name} src={ownerImage} size="md" />
+        <img
+          src={ownerImage}
+          alt={owner.name}
+          className="h-12 w-12 rounded-full object-cover"
+        />
         <div className="flex flex-col items-start">
-          <span className="text-base font-semibold">{owner.name}</span>
-          <span className="text-xs font-thin">{createdAt}</span>
+          <span className="text-base tracking-wider">{owner.name}</span>
+          <span className="text-xs font-light">{createdAt}</span>
         </div>
       </div>
     </div>

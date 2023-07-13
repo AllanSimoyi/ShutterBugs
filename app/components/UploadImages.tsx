@@ -1,7 +1,6 @@
 import type { ChangeEvent } from 'react';
 import type { ImageUploadState } from '~/hooks/useUploadImages';
 
-import { Divider } from '@chakra-ui/react';
 import { useCallback } from 'react';
 
 import { UploadState } from '~/lib/cloudinary';
@@ -57,7 +56,6 @@ export function UploadImages(props: Props) {
           </div>
         )}
       </div>
-      <Divider />
       <div className="flex flex-col items-stretch bg-transparent p-4">
         <AddImage handleChange={handleChange} />
       </div>

@@ -7,7 +7,6 @@ import { AppTitle } from './AppTitle';
 import { CenteredView } from './CenteredView';
 import { DebouncedSearch } from './DebouncedSearch';
 import { DropDownMenu } from './DropDownMenu';
-import { ToggleColorMode } from './ToggleColorMode';
 
 export interface ToolbarProps {
   currentUserName: string | undefined;
@@ -26,7 +25,7 @@ export function Toolbar(props: ToolbarProps) {
             </Link>
             <div className="grow" />
             <div className="flex flex-row items-end gap-4 lg:hidden">
-              <ToggleColorMode aria-label="Toggle Dark Mode" />
+              {/* <ToggleColorMode aria-label="Toggle Dark Mode" /> */}
               <DropDownMenu loggedIn={!!currentUserName} />
             </div>
           </div>
@@ -41,7 +40,7 @@ export function Toolbar(props: ToolbarProps) {
                 {currentUserName}
               </span>
             )}
-            <ToggleColorMode aria-label="Toggle Dark Mode" />
+            {/* <ToggleColorMode aria-label="Toggle Dark Mode" /> */}
             <DropDownMenu loggedIn={!!currentUserName} />
           </div>
         </div>

@@ -18,8 +18,8 @@ export function FormTextField<SchemaType extends Record<string, any>>(
   const isSubmitting = useIsSubmitting();
 
   return (
-    <div className="flex flex-col items-stretch justify-center space-y-2">
-      {label && <span className="text-md text-white/50">{label}</span>}
+    <div className="flex flex-col items-stretch justify-center gap-1">
+      {label && <span className="font-thin text-stone-400">{label}</span>}
       <input
         required
         ref={customRef}
@@ -31,8 +31,8 @@ export function FormTextField<SchemaType extends Record<string, any>>(
         aria-describedby={`${name}-error`}
         className={twMerge(
           'transition-all duration-300',
-          'rounded-md border border-white/5 bg-white/5 p-6 text-base font-semibold text-white outline-none backdrop-blur-xl focus:bg-white/10',
-          error?.length ? 'outline-red-600' : undefined,
+          'rounded-md border border-stone-400 p-2 font-light outline-none focus:ring-1 focus:ring-stone-400',
+          error?.length && 'border-2 border-red-600',
           className
         )}
         {...restOfProps}

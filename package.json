@@ -31,12 +31,8 @@
     "/public/build"
   ],
   "dependencies": {
-    "@chakra-ui/react": "^2.4.6",
     "@cloudinary/react": "^1.8.0",
     "@cloudinary/url-gen": "^1.8.7",
-    "@emotion/react": "^11",
-    "@emotion/server": "^11",
-    "@emotion/styled": "^11",
     "@headlessui/react": "^1.7.15",
     "@prisma/client": "^4.5.0",
     "@remix-run/node": "^1.9.0",

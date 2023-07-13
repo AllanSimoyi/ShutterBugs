@@ -1,6 +1,5 @@
 import type { LoaderArgs } from '@remix-run/server-runtime';
 
-import { Img } from '@chakra-ui/react';
 import { fill } from '@cloudinary/url-gen/actions/resize';
 import { useLoaderData } from '@remix-run/react';
 import { json } from '@remix-run/server-runtime';
@@ -53,7 +52,6 @@ export default function ProfilePage() {
           <ProfilePic
             imageId={currentUser.imageId}
             fullName={currentUser.fullName}
-            large
           />
           <div className="flex flex-col items-center justify-center gap-0">
             <span className="text-2xl font-semibold">
@@ -80,8 +78,9 @@ export default function ProfilePage() {
         <div className="flex flex-col items-stretch py-6">
           <div className="grid grid-cols-2 gap-1 md:grid-cols-3 lg:grid-cols-6">
             {posts.map((post) => (
-              <Img
+              <img
                 key={post.id}
+                alt={'Post'}
                 className="h-auto w-full object-cover transition-all duration-300 hover:scale-105"
                 src={getImageUrl(post.imageId)}
               />

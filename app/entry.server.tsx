@@ -1,13 +1,13 @@
-// entry.server.tsx
-import type { EntryContext } from '@remix-run/node'; // Depends on the runtime you choose
+import type { EntryContext } from '@remix-run/node';
 
-import { CacheProvider } from '@emotion/react';
-import createEmotionServer from '@emotion/server/create-instance';
+import { PassThrough } from 'stream';
+
+import { Response } from '@remix-run/node';
 import { RemixServer } from '@remix-run/react';
-import { renderToString } from 'react-dom/server';
+import isbot from 'isbot';
+import { renderToPipeableStream } from 'react-dom/server';
 
-import { ServerStyleContext } from './context';
-import createEmotionCache from './createEmotionCache';
+const ABORT_DELAY = 5000;
 
 export default function handleRequest(
   request: Request,
@@ -15,31 +15,41 @@ export default function handleRequest(
   responseHeaders: Headers,
   remixContext: EntryContext
 ) {
-  const cache = createEmotionCache();
-  const { extractCriticalToChunks } = createEmotionServer(cache);
+  const callbackName = isbot(request.headers.get('user-agent'))
+    ? 'onAllReady'
+    : 'onShellReady';
 
-  const html = renderToString(
-    <ServerStyleContext.Provider value={null}>
-      <CacheProvider value={cache}>
-        <RemixServer context={remixContext} url={request.url} />
-      </CacheProvider>
-    </ServerStyleContext.Provider>
-  );
+  return new Promise((resolve, reject) => {
+    let didError = false;
 
-  const chunks = extractCriticalToChunks(html);
+    const { pipe, abort } = renderToPipeableStream(
+      <RemixServer context={remixContext} url={request.url} />,
+      {
+        [callbackName]: () => {
+          const body = new PassThrough();
 
-  const markup = renderToString(
-    <ServerStyleContext.Provider value={chunks.styles}>
-      <CacheProvider value={cache}>
-        <RemixServer context={remixContext} url={request.url} />
-      </CacheProvider>
-    </ServerStyleContext.Provider>
-  );
+          responseHeaders.set('Content-Type', 'text/html');
 
-  responseHeaders.set('Content-Type', 'text/html');
+          resolve(
+            new Response(body, {
+              headers: responseHeaders,
+              status: didError ? 500 : responseStatusCode,
+            })
+          );
 
-  return new Response(`<!DOCTYPE html>${markup}`, {
-    status: responseStatusCode,
-    headers: responseHeaders,
+          pipe(body);
+        },
+        onShellError: (err: unknown) => {
+          reject(err);
+        },
+        onError: (error: unknown) => {
+          didError = true;
+
+          console.error(error);
+        },
+      }
+    );
+
+    setTimeout(abort, ABORT_DELAY);
   });
 }

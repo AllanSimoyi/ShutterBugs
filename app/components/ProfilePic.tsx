@@ -1,4 +1,3 @@
-import { Avatar } from '@chakra-ui/react';
 import { useMemo } from 'react';
 
 import { useCloudinary } from './CloudinaryContextProvider';
@@ -6,11 +5,10 @@ import { useCloudinary } from './CloudinaryContextProvider';
 interface Props {
   imageId: string | undefined;
   fullName: string;
-  large?: boolean;
 }
 
 export function ProfilePic(props: Props) {
-  const { imageId, fullName, large } = props;
+  const { imageId, fullName } = props;
   const { CloudinaryUtil } = useCloudinary();
 
   const imageSrc = useMemo(() => {
@@ -20,5 +18,11 @@ export function ProfilePic(props: Props) {
     return CloudinaryUtil.image(imageId).format('auto').quality('auto').toURL();
   }, [imageId, CloudinaryUtil]);
 
-  return <Avatar name={fullName} src={imageSrc} size={large ? '2xl' : 'md'} />;
+  return (
+    <img
+      alt={fullName}
+      src={imageSrc}
+      className="h-36 w-36 rounded-full object-cover"
+    />
+  );
 }

@@ -2,65 +2,58 @@ import type { RemixLinkProps } from '@remix-run/react/dist/components';
 import type { ComponentProps } from 'react';
 
 import { Link } from '@remix-run/react';
+import { twMerge } from 'tailwind-merge';
 
 interface GetClassNameProps {
-  large?: boolean;
   className: string | undefined;
   disabled: boolean | undefined;
 }
 function getClassName(props: GetClassNameProps) {
-  const { large, disabled, className: inputClassName } = props;
+  const { disabled, className: inputClassName } = props;
 
-  const className =
-    'rounded font-semibold transition-all duration-300 text-center text-white ' +
-    (large ? 'py-6 text-[1.2em] uppercase xl:p-8 ' : 'p-4 text-base ') +
-    (disabled
-      ? 'bg-green-600/50 cursor-not-allowed '
-      : 'bg-green-600 hover:bg-green-700 focus:bg-green-600 focus:outline-green-600 ') +
-    (inputClassName || '');
+  const className = twMerge(
+    'rounded-md transition-all duration-300 text-center text-white p-3',
+    'bg-stone-600 hover:bg-stone-700 focus:bg-stone-600 focus:outline-stone-600',
+    disabled && 'bg-stone-600/50 cursor-not-allowed hover:bg-stone-600/50',
+    inputClassName
+  );
   return className;
 }
 
-interface Props extends ComponentProps<'button'> {
-  large?: boolean;
-}
+interface Props extends ComponentProps<'button'> {}
 export function PrimaryButton(props: Props) {
-  const { large, type = 'button', disabled, className, ...restOfProps } = props;
+  const { type = 'button', disabled, className, ...restOfProps } = props;
 
   return (
     <button
       type={type}
-      className={getClassName({ large, className, disabled })}
+      className={getClassName({ className, disabled })}
       disabled={disabled}
       {...restOfProps}
     />
   );
 }
 
-interface ButtonLinkProps extends ComponentProps<typeof Link>, RemixLinkProps {
-  large?: boolean;
-}
+interface ButtonLinkProps extends ComponentProps<typeof Link>, RemixLinkProps {}
 export function PrimaryButtonLink(props: ButtonLinkProps) {
-  const { className, large, children, ...restOfProps } = props;
+  const { className, children, ...restOfProps } = props;
 
   return (
     <Link
-      className={getClassName({ large, className, disabled: false })}
+      className={getClassName({ className, disabled: false })}
       children={children}
       {...restOfProps}
     />
   );
 }
 
-interface ExternalLinkProps extends ComponentProps<'a'> {
-  large?: boolean;
-}
+interface ExternalLinkProps extends ComponentProps<'a'> {}
 export function PrimaryButtonExternalLink(props: ExternalLinkProps) {
-  const { large, className, children, ...restOfProps } = props;
+  const { className, children, ...restOfProps } = props;
 
   return (
     <a
-      className={getClassName({ large, className, disabled: false })}
+      className={getClassName({ className, disabled: false })}
       children={children}
       {...restOfProps}
     />

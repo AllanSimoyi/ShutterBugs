@@ -1,24 +1,23 @@
 import type { ActionArgs, LoaderArgs, MetaFunction } from '@remix-run/node';
 
-import { useToast } from '@chakra-ui/react';
 import { json, redirect } from '@remix-run/node';
 import {
   Form,
+  Link,
   useActionData,
   useLoaderData,
   useNavigation,
 } from '@remix-run/react';
-import { useEffect } from 'react';
 import { z } from 'zod';
 
 import { ActionContextProvider } from '~/components/ActionContextProvider';
+import { AppTitle } from '~/components/AppTitle';
 import { RouteErrorBoundary } from '~/components/Boundaries';
-import { Card } from '~/components/Card';
+import { Footer } from '~/components/Footer';
 import { FormTextField } from '~/components/FormTextField';
 import { InlineAlert } from '~/components/InlineAlert';
-import { PrimaryButton, PrimaryButtonLink } from '~/components/PrimaryButton';
+import { PrimaryButton } from '~/components/PrimaryButton';
 import { SecondaryButtonLink } from '~/components/SecondaryButton';
-import { ToggleColorMode } from '~/components/ToggleColorMode';
 import { EmailSchema } from '~/lib/auth.validations';
 import { PRODUCT_NAME } from '~/lib/constants';
 import {
@@ -33,9 +32,7 @@ import { createUserSession, getUserId } from '~/session.server';
 import { safeRedirect } from '~/utils';
 
 export const meta: MetaFunction = () => {
-  return {
-    title: `${PRODUCT_NAME} - Login`,
-  };
+  return { title: `${PRODUCT_NAME} - Login` };
 };
 
 export async function loader({ request }: LoaderArgs) {
@@ -44,11 +41,8 @@ export async function loader({ request }: LoaderArgs) {
     return redirect('/');
   }
 
-  const { message, redirectTo } = getQueryParams(request.url, [
-    'message',
-    'redirectTo',
-  ]);
-  return json({ message: message?.replace(/_/g, ' '), redirectTo });
+  const { redirectTo } = getQueryParams(request.url, ['redirectTo']);
+  return json({ redirectTo });
 }
 
 const Schema = z.object({
@@ -59,7 +53,7 @@ const Schema = z.object({
 
 export async function action({ request }: ActionArgs) {
   const fields = await getRawFormFields(request);
-  const result = await Schema.safeParseAsync(fields);
+  const result = Schema.safeParse(fields);
   if (!result.success) {
     return processBadRequest(result.error, fields);
   }
@@ -80,66 +74,48 @@ export async function action({ request }: ActionArgs) {
 }
 
 export default function LoginPage() {
-  const { message, redirectTo } = useLoaderData<typeof loader>();
+  const { redirectTo } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
-  const navigation = useNavigation();
 
-  const toast = useToast();
+  const navigation = useNavigation();
 
   const isProcessing = navigation.state !== 'idle';
 
-  useEffect(() => {
-    if (message) {
-      toast({ title: message, status: 'error', isClosable: true });
-    }
-  }, [toast, message]);
-
   return (
-    <div className="flex min-h-full flex-col items-stretch">
-      <div className="flex flex-row items-center p-4">
-        <PrimaryButtonLink to={AppLinks.Home}>To Home Page</PrimaryButtonLink>
+    <div className="flex h-full flex-col items-stretch justify-center">
+      <div className="flex h-full flex-col items-center justify-center">
         <div className="grow" />
-        <ToggleColorMode aria-label="Toggle Dark Mode" />
+        <Form
+          method="post"
+          className="flex w-full flex-col items-stretch justify-center gap-12 p-4 md:w-[80%] lg:w-[40%]"
+        >
+          <ActionContextProvider {...actionData} isSubmitting={isProcessing}>
+            <input type="hidden" name="redirectTo" value={redirectTo} />
+            <div className="flex flex-col items-center justify-center">
+              <Link to={AppLinks.Home}>
+                <AppTitle title={PRODUCT_NAME} />
+              </Link>
+            </div>
+            <div className="flex flex-col items-stretch gap-4">
+              <FormTextField name="email" type="email" label="Email Address" />
+              <FormTextField name="password" label="Password" type="password" />
+              {hasFormError(actionData) && (
+                <InlineAlert>{actionData.formError}</InlineAlert>
+              )}
+            </div>
+            <div className="flex flex-col items-stretch gap-4">
+              <PrimaryButton type="submit" disabled={isProcessing}>
+                {isProcessing ? 'Logging In...' : 'Log In'}
+              </PrimaryButton>
+              <SecondaryButtonLink to={AppLinks.Join} type="button">
+                Don't Have An Account
+              </SecondaryButtonLink>
+            </div>
+          </ActionContextProvider>
+        </Form>
+        <div className="grow" />
       </div>
-      <div className="flex grow flex-col items-center justify-center py-8">
-        <div className="flex w-full flex-col items-stretch justify-center gap-12 p-4 md:w-[80%] lg:w-[40%]">
-          <Form method="post">
-            <ActionContextProvider {...actionData} isSubmitting={isProcessing}>
-              <input type="hidden" name="redirectTo" value={redirectTo} />
-              <Card>
-                <div className="flex flex-col items-center justify-center">
-                  <h1 className="text-lg font-semibold">
-                    ShutterBugs - Log In
-                  </h1>
-                </div>
-                <div className="flex flex-col items-stretch gap-4">
-                  <FormTextField
-                    name="email"
-                    type="email"
-                    label="Email Address"
-                  />
-                  <FormTextField
-                    name="password"
-                    label="Password"
-                    type="password"
-                  />
-                  {hasFormError(actionData) && (
-                    <InlineAlert>{actionData.formError}</InlineAlert>
-                  )}
-                </div>
-                <div className="flex w-full flex-col items-stretch gap-4">
-                  <PrimaryButton type="submit" disabled={isProcessing}>
-                    {isProcessing ? 'Logging In...' : 'Log In'}
-                  </PrimaryButton>
-                  <SecondaryButtonLink to={AppLinks.Join} type="button">
-                    Don't Have An Account
-                  </SecondaryButtonLink>
-                </div>
-              </Card>
-            </ActionContextProvider>
-          </Form>
-        </div>
-      </div>
+      <Footer appTitle={PRODUCT_NAME} />
     </div>
   );
 }

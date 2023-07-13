@@ -2,30 +2,27 @@ import type { RemixLinkProps } from '@remix-run/react/dist/components';
 import type { ComponentProps } from 'react';
 
 import { Link } from '@remix-run/react';
+import { twMerge } from 'tailwind-merge';
 
 interface GetClassNameProps {
   className: string | undefined;
   disabled: boolean | undefined;
-  large?: boolean;
 }
 function getClassName(props: GetClassNameProps) {
-  const { className: inputClassName, disabled, large } = props;
-  const className =
-    'bg-stone-100 rounded font-semibold transition-all duration-300 text-center ' +
-    (disabled
-      ? 'text-stone-400 cursor-not-allowed '
-      : 'text-green-600 hover:bg-stone-200 focus:bg-stone-200 focus:outline-green-100 ') +
-    (large ? 'py-6 text-[1.2em] uppercase xl:p-8 ' : 'p-4 text-base ') +
-    (inputClassName || '');
+  const { className: inputClassName, disabled } = props;
+  const className = twMerge(
+    'rounded-md transition-all duration-300 text-center p-3',
+    'bg-stone-200 text-stone-600 hover:bg-stone-300 focus:bg-stone-200 focus:outline-green-100',
+    disabled &&
+      'text-stone-400/40 cursor-not-allowed bg-stone-200/50 hover:bg-stone-200/50',
+    inputClassName || ''
+  );
   return className;
 }
 
-interface Props extends ComponentProps<'button'> {
-  large?: boolean;
-}
+interface Props extends ComponentProps<'button'> {}
 export function SecondaryButton(props: Props) {
   const {
-    large,
     className,
     children,
     type = 'button',
@@ -35,7 +32,7 @@ export function SecondaryButton(props: Props) {
   return (
     <button
       type={type}
-      className={getClassName({ large, className, disabled })}
+      className={getClassName({ className, disabled })}
       children={children}
       disabled={disabled}
       {...restOfProps}
@@ -43,28 +40,24 @@ export function SecondaryButton(props: Props) {
   );
 }
 
-interface ButtonLinkProps extends ComponentProps<typeof Link>, RemixLinkProps {
-  large?: boolean;
-}
+interface ButtonLinkProps extends ComponentProps<typeof Link>, RemixLinkProps {}
 export function SecondaryButtonLink(props: ButtonLinkProps) {
-  const { children, large, className, ...restOfProps } = props;
+  const { children, className, ...restOfProps } = props;
   return (
     <Link
-      className={getClassName({ large, className, disabled: false })}
+      className={getClassName({ className, disabled: false })}
       children={children}
       {...restOfProps}
     />
   );
 }
 
-interface ExternalLinkProps extends ComponentProps<'a'> {
-  large?: boolean;
-}
+interface ExternalLinkProps extends ComponentProps<'a'> {}
 export function SecondaryButtonExternalLink(props: ExternalLinkProps) {
-  const { children, className, large, ...restOfProps } = props;
+  const { children, className, ...restOfProps } = props;
   return (
     <a
-      className={getClassName({ large, className, disabled: false })}
+      className={getClassName({ className, disabled: false })}
       children={children}
       {...restOfProps}
     />

@@ -4,7 +4,6 @@ import type {
   LoaderArgs,
 } from '@remix-run/server-runtime';
 
-import { useToast } from '@chakra-ui/react';
 import { useFetcher, useLoaderData, useNavigate } from '@remix-run/react';
 import { json } from '@remix-run/server-runtime';
 import { useEffect, useMemo } from 'react';
@@ -68,7 +67,6 @@ export default function NewPost() {
   const { ImageUploadSizeLimit } = useLoaderData<typeof loader>();
   const fetcher = useFetcher<typeof action>();
 
-  const toast = useToast();
   const navigate = useNavigate();
 
   const imageUploadTools = useUploadImage({
@@ -85,16 +83,6 @@ export default function NewPost() {
     }
     return result.data.postId;
   }, [fetcher.data]);
-
-  useEffect(() => {
-    if (hasFormError(fetcher.data)) {
-      toast({
-        title: fetcher.data.formError,
-        status: 'error',
-        isClosable: true,
-      });
-    }
-  }, [toast, fetcher.data]);
 
   useEffect(() => {
     if (postId) {

@@ -1,12 +1,6 @@
 import type { LinksFunction, LoaderArgs, MetaFunction } from '@remix-run/node';
 
-import {
-  ChakraProvider,
-  cookieStorageManagerSSR,
-  localStorageManager,
-} from '@chakra-ui/react';
 import { Cloudinary } from '@cloudinary/url-gen';
-import { withEmotionCache } from '@emotion/react';
 import { json } from '@remix-run/node'; // Depends on the runtime you choose
 import {
   Links,
@@ -17,16 +11,15 @@ import {
   ScrollRestoration,
   useLoaderData,
 } from '@remix-run/react';
-import React, { useContext, useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { CloudinaryContextProvider } from './components/CloudinaryContextProvider';
-import { ClientStyleContext, ServerStyleContext } from './context';
 import { PRODUCT_NAME } from './lib/constants';
+import { Env } from './lib/environment';
 import { AppLinks } from './lib/links';
 import { getUser } from './session.server';
 import customStylesUrl from './styles/custom.css';
 import tailwindStylesheetUrl from './styles/tailwind.css';
-import theme from './theme';
 
 export const meta: MetaFunction = () => {
   const description = 'Organize, group, collaborate, share, great photography';
@@ -50,99 +43,51 @@ export let links: LinksFunction = () => {
   return [
     {
       rel: 'stylesheet',
-      href: 'https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&display=swap',
+      href: 'https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;600;700&display=swap',
     },
     { rel: 'stylesheet', href: tailwindStylesheetUrl },
     { rel: 'stylesheet', href: customStylesUrl },
   ];
 };
 
-interface DocumentProps {
-  children: React.ReactNode;
-}
-
-const Document = withEmotionCache(
-  ({ children }: DocumentProps, emotionCache) => {
-    const serverStyleData = useContext(ServerStyleContext);
-    const clientStyleData = useContext(ClientStyleContext);
-
-    // Only executed on client
-    useEffect(() => {
-      // re-link sheet container
-      emotionCache.sheet.container = document.head;
-      // re-inject tags
-      const tags = emotionCache.sheet.tags;
-      emotionCache.sheet.flush();
-      tags.forEach((tag) => {
-        (emotionCache.sheet as any)._insertTag(tag);
-      });
-      // reset cache to reapply global styles
-      clientStyleData?.reset();
-    }, [clientStyleData, emotionCache.sheet]);
-    // }, []);
-
-    return (
-      <html lang="en" className="h-full">
-        <head>
-          <Meta />
-          <Links />
-          {serverStyleData?.map(({ key, ids, css }) => (
-            <style
-              key={key}
-              data-emotion={`${key} ${ids.join(' ')}`}
-              dangerouslySetInnerHTML={{ __html: css }}
-            />
-          ))}
-        </head>
-        <body className="min-h-full">
-          {children}
-          <ScrollRestoration />
-          <Scripts />
-          <LiveReload />
-        </body>
-      </html>
-    );
-  }
-);
-
 export async function loader({ request }: LoaderArgs) {
   const user = await getUser(request);
 
-  const CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME || '';
-  const UPLOAD_RESET = process.env.CLOUDINARY_UPLOAD_RESET || '';
+  const CLOUD_NAME = Env.CLOUDINARY_CLOUD_NAME;
+  const UPLOAD_RESET = Env.CLOUDINARY_UPLOAD_RESET;
 
-  const cookies = request.headers.get('cookie') ?? '';
-
-  return json({ user, CLOUD_NAME, UPLOAD_RESET, cookies });
+  return json({ user, CLOUD_NAME, UPLOAD_RESET });
 }
 
 export default function App() {
-  const { CLOUD_NAME, UPLOAD_RESET, cookies } = useLoaderData<typeof loader>();
+  const { CLOUD_NAME, UPLOAD_RESET } = useLoaderData<typeof loader>();
 
   const CloudinaryUtil = useMemo(() => {
     return new Cloudinary({ cloud: { cloudName: CLOUD_NAME } });
   }, [CLOUD_NAME]);
 
-  const colorMode = useMemo(
-    () =>
-      typeof cookies === 'string'
-        ? cookieStorageManagerSSR(cookies)
-        : localStorageManager,
-    [cookies]
-  );
-
   return (
-    <Document>
-      <ChakraProvider theme={theme} colorModeManager={colorMode}>
+    <html lang="en" className="h-full">
+      <head>
+        <Meta />
+        <Links />
+      </head>
+      <body className="h-full">
         <CloudinaryContextProvider
           CLOUDINARY_CLOUD_NAME={CLOUD_NAME}
           CLOUDINARY_UPLOAD_RESET={UPLOAD_RESET}
           CloudinaryUtil={CloudinaryUtil}
         >
           <Outlet />
+          <ScrollRestoration />
+          <Scripts />
+          <LiveReload />
         </CloudinaryContextProvider>
-      </ChakraProvider>
-    </Document>
+        <ScrollRestoration />
+        <Scripts />
+        <LiveReload />
+      </body>
+    </html>
   );
 }
 
