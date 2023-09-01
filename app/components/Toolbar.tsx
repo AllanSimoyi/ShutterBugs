@@ -16,31 +16,23 @@ export function Toolbar(props: ToolbarProps) {
   const { currentUserName } = props;
 
   return (
-    <header className="sticky top-0 z-50 flex w-full flex-col items-stretch border border-stone-200 bg-white/80 backdrop-blur-lg">
+    <header className="sticky top-0 flex w-full flex-col items-stretch border border-stone-200 bg-white/80 backdrop-blur-lg">
       <CenteredView>
-        <div className="flex flex-col items-stretch gap-2 p-2 lg:flex-row lg:items-center lg:gap-6">
-          <div className="flex flex-row items-center lg:w-[20%]">
+        <div className="grid grid-cols-2 gap-2 p-2 lg:grid-cols-3">
+          <div className="order-1 flex flex-col justify-center">
             <Link to={AppLinks.Home}>
               <AppTitle title={PRODUCT_NAME} />
             </Link>
-            <div className="grow" />
-            <div className="flex flex-row items-end gap-4 lg:hidden">
-              {/* <ToggleColorMode aria-label="Toggle Dark Mode" /> */}
-              <DropDownMenu loggedIn={!!currentUserName} />
-            </div>
           </div>
-          <div className="grow" />
-          <div className="flex grow flex-row items-center justify-center rounded-md md:min-w-[60%] lg:min-w-[40%]">
+          <div className="order-3 col-span-2 flex flex-col items-stretch lg:order-2 lg:col-span-1">
             <DebouncedSearch runSearch={() => {}} placeholder="Search" />
           </div>
-          <div className="hidden grow lg:flex" />
-          <div className="hidden flex-row items-center justify-end gap-2 lg:flex lg:w-1/5">
+          <div className="order-2 flex flex-row items-center justify-end gap-2 lg:order-3">
             {currentUserName && (
-              <span className="p-2 text-sm" title={currentUserName}>
+              <span className="p-2 text-sm font-light" title={currentUserName}>
                 {currentUserName}
               </span>
             )}
-            {/* <ToggleColorMode aria-label="Toggle Dark Mode" /> */}
             <DropDownMenu loggedIn={!!currentUserName} />
           </div>
         </div>

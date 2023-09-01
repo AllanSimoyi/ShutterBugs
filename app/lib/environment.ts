@@ -12,6 +12,7 @@ const EnvSchema = z.object({
   CLOUDINARY_UPLOAD_RESET: PresentStringSchema,
 
   DEVELOPER_WEBSITE_LINK: PresentStringSchema,
+  HF_TOKEN: PresentStringSchema,
 });
 
 const result = EnvSchema.safeParse(process.env);

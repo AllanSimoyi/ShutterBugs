@@ -1,17 +1,17 @@
 import type { ActionArgs, LoaderArgs, MetaFunction } from '@remix-run/node';
 
 import { json, redirect } from '@remix-run/node';
-import { Form, useActionData, useNavigation } from '@remix-run/react';
+import { Form, Link, useActionData, useNavigation } from '@remix-run/react';
 import { z } from 'zod';
 
 import { ActionContextProvider } from '~/components/ActionContextProvider';
+import { AppTitle } from '~/components/AppTitle';
 import { RouteErrorBoundary } from '~/components/Boundaries';
-import { Card } from '~/components/Card';
+import { Footer } from '~/components/Footer';
 import { FormTextField } from '~/components/FormTextField';
 import { InlineAlert } from '~/components/InlineAlert';
-import { PrimaryButton, PrimaryButtonLink } from '~/components/PrimaryButton';
+import { PrimaryButton } from '~/components/PrimaryButton';
 import { SecondaryButtonLink } from '~/components/SecondaryButton';
-import { ToggleColorMode } from '~/components/ToggleColorMode';
 import {
   EmailSchema,
   FullNameSchema,
@@ -25,9 +25,7 @@ import { createUser, getUserByEmail } from '~/lib/user.server';
 import { createUserSession, getUserId } from '~/session.server';
 
 export const meta: MetaFunction = () => {
-  return {
-    title: `${PRODUCT_NAME} - Create Account`,
-  };
+  return { title: `${PRODUCT_NAME} - Create Account` };
 };
 
 const Schema = z
@@ -52,7 +50,7 @@ export async function loader({ request }: LoaderArgs) {
 
 export async function action({ request }: ActionArgs) {
   const fields = await getRawFormFields(request);
-  const result = await Schema.safeParseAsync(fields);
+  const result = Schema.safeParse(fields);
   if (!result.success) {
     return processBadRequest(result.error, fields);
   }
@@ -62,7 +60,7 @@ export async function action({ request }: ActionArgs) {
   if (existingUser) {
     return badRequest({
       fields,
-      fieldErrors: { email: ['A user already exists with this email'] },
+      fieldErrors: { email: ['Email already used by another user'] },
       formError: undefined,
     });
   }
@@ -83,64 +81,45 @@ export default function CreateAccount() {
   const isProcessing = navigation.state !== 'idle';
 
   return (
-    <div className="flex min-h-full flex-col items-stretch">
-      <div className="flex flex-row items-center p-4">
-        <PrimaryButtonLink to={AppLinks.Home} className="font-semibold">
-          To Home Page
-        </PrimaryButtonLink>
+    <div className="flex h-full flex-col items-stretch justify-center">
+      <div className="flex h-full flex-col items-center justify-center">
         <div className="grow" />
-        <ToggleColorMode aria-label="Toggle Dark Mode" />
+        <Form
+          method="post"
+          className="flex w-full flex-col items-stretch justify-center gap-12 p-4 sm:w-[80%] md:w-[60%] lg:w-[40%]"
+        >
+          <ActionContextProvider {...actionData} isSubmitting={isProcessing}>
+            <div className="flex flex-col items-center justify-center">
+              <Link to={AppLinks.Home}>
+                <AppTitle title={PRODUCT_NAME} />
+              </Link>
+            </div>
+            <div className="flex flex-col items-stretch gap-4">
+              <FormTextField name="fullName" type="text" label="Name" />
+              <FormTextField name="email" type="email" label="Email" />
+              <FormTextField name="password" label="Password" type="password" />
+              <FormTextField
+                name="passwordConfirmation"
+                label="Re-Enter Password"
+                type="password"
+              />
+              {hasFormError(actionData) && (
+                <InlineAlert>{actionData.formError}</InlineAlert>
+              )}
+            </div>
+            <div className="flex w-full flex-col items-stretch gap-4">
+              <PrimaryButton type="submit" disabled={isProcessing}>
+                {isProcessing ? 'Creating Account...' : 'Create Account'}
+              </PrimaryButton>
+              <SecondaryButtonLink to={AppLinks.Login}>
+                Already Have An Account
+              </SecondaryButtonLink>
+            </div>
+          </ActionContextProvider>
+        </Form>
+        <div className="grow" />
       </div>
-      <div className="flex grow flex-col items-center justify-center py-8">
-        <div className="lg:[40%] flex w-full flex-col items-stretch justify-center p-4 md:w-[80%]">
-          <Form method="post">
-            <ActionContextProvider {...actionData} isSubmitting={isProcessing}>
-              <div className="flex flex-col items-stretch gap-6">
-                <Card>
-                  <div className="flex flex-col items-center justify-center">
-                    <h1 className="text-lg font-semibold">
-                      ShutterBugs - Create Account
-                    </h1>
-                  </div>
-                  <div className="flex flex-col items-stretch gap-4">
-                    <FormTextField
-                      name="fullName"
-                      type="text"
-                      label="Full Name"
-                    />
-                    <FormTextField
-                      name="email"
-                      type="email"
-                      label="Email Address"
-                    />
-                    <FormTextField
-                      name="password"
-                      label="Password"
-                      type="password"
-                    />
-                    <FormTextField
-                      name="passwordConfirmation"
-                      label="Re-Enter Password"
-                      type="password"
-                    />
-                    {hasFormError(actionData) && (
-                      <InlineAlert>{actionData.formError}</InlineAlert>
-                    )}
-                  </div>
-                  <div className="flex w-full flex-col items-stretch gap-4">
-                    <PrimaryButton type="submit" disabled={isProcessing}>
-                      {isProcessing ? 'Creating Account...' : 'Create Account'}
-                    </PrimaryButton>
-                    <SecondaryButtonLink to={AppLinks.Login} className="w-full">
-                      Already Have An Account
-                    </SecondaryButtonLink>
-                  </div>
-                </Card>
-              </div>
-            </ActionContextProvider>
-          </Form>
-        </div>
-      </div>
+      <Footer appTitle={PRODUCT_NAME} />
     </div>
   );
 }

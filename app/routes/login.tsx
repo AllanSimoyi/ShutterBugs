@@ -87,7 +87,7 @@ export default function LoginPage() {
         <div className="grow" />
         <Form
           method="post"
-          className="flex w-full flex-col items-stretch justify-center gap-12 p-4 md:w-[80%] lg:w-[40%]"
+          className="flex w-full flex-col items-stretch justify-center gap-12 p-4 sm:w-[80%] md:w-[60%] lg:w-[40%]"
         >
           <ActionContextProvider {...actionData} isSubmitting={isProcessing}>
             <input type="hidden" name="redirectTo" value={redirectTo} />
@@ -107,7 +107,7 @@ export default function LoginPage() {
               <PrimaryButton type="submit" disabled={isProcessing}>
                 {isProcessing ? 'Logging In...' : 'Log In'}
               </PrimaryButton>
-              <SecondaryButtonLink to={AppLinks.Join} type="button">
+              <SecondaryButtonLink to={AppLinks.Join}>
                 Don't Have An Account
               </SecondaryButtonLink>
             </div>

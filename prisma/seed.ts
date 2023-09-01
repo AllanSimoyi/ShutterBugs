@@ -17,18 +17,12 @@ async function seed() {
     },
   });
 
-  await ['Image_One', 'Two_c11yl7', 'Three_whxzvj', 'Four_u2avvl'].reduce(
-    async (acc, imageId) => {
-      await acc;
-      await prisma.post.create({
-        data: {
-          userId: Allan.id,
-          imageId,
-        },
-      });
-    },
-    Promise.resolve()
-  );
+  const imageIds = ['Image_One', 'Two_c11yl7', 'Three_whxzvj', 'Four_u2avvl'];
+  for (const imageId of imageIds) {
+    await prisma.post.create({
+      data: { userId: Allan.id, imageId },
+    });
+  }
 
   console.log(`Database has been seeded. 🌱`);
 }

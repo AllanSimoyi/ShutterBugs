@@ -1,23 +1,30 @@
+import 'react-gallery-carousel/dist/index.css';
+
 import { fill } from '@cloudinary/url-gen/actions/resize';
 import { byRadius } from '@cloudinary/url-gen/actions/roundCorners';
 import { useMemo } from 'react';
-import 'react-gallery-carousel/dist/index.css';
+import { InfoCircle } from 'tabler-icons-react';
+import { twMerge } from 'tailwind-merge';
+
+import { capitalize } from '~/lib/strings';
 
 import { useCloudinary } from './CloudinaryContextProvider';
 
 interface Props {
   postId: string;
   imageId: string;
+  description: string | undefined;
   createdAt: string;
   owner: {
     id: string;
     imageId: string;
     name: string;
   };
+  onSelect: () => void;
 }
 
 export function PostCard(props: Props) {
-  const { imageId, createdAt, owner } = props;
+  const { imageId, description, createdAt, owner, onSelect } = props;
 
   const { CloudinaryUtil } = useCloudinary();
 
@@ -39,12 +46,30 @@ export function PostCard(props: Props) {
   }, [CloudinaryUtil, owner.imageId]);
 
   return (
-    <div
-      className="flex h-[80vh] flex-col items-stretch rounded-md bg-gradient-to-r from-black bg-cover bg-bottom bg-no-repeat"
+    <button
+      type="button"
+      onClick={onSelect}
+      className={twMerge(
+        'group flex h-[80vh] flex-col items-stretch rounded-md bg-gradient-to-r from-black bg-cover bg-bottom bg-no-repeat',
+        'transition-all duration-300 hover:scale-[101%] hover:ring-stone-600'
+      )}
       style={{
         backgroundImage: `linear-gradient(to bottom, rgba(225, 225, 225, 0), rgba(0, 0, 0, 0.9)), url('${postImage}')`,
       }}
     >
+      {description && (
+        <div className="flex flex-col items-start p-4 opacity-0 transition-all duration-300 group-hover:opacity-100">
+          <span
+            className={twMerge(
+              'bg-white/40 p-2 text-start text-sm font-normal tracking-wider text-stone-800',
+              'flex flex-row items-start gap-2 rounded-xl'
+            )}
+          >
+            <InfoCircle size={20} />
+            <span>{capitalize(description)}</span>
+          </span>
+        </div>
+      )}
       <div className="grow" />
       <div className="flex flex-row items-center gap-4 p-4 text-white">
         <img
@@ -57,6 +82,6 @@ export function PostCard(props: Props) {
           <span className="text-xs font-light">{createdAt}</span>
         </div>
       </div>
-    </div>
+    </button>
   );
 }
