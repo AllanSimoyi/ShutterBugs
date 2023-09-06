@@ -1,70 +1,43 @@
 import { useCallback, useState } from 'react';
 
-import { useCloudinary } from '~/components/CloudinaryContextProvider';
-import { UploadState, uploadToCloudinary } from '~/lib/cloudinary';
+import { UploadState } from '~/lib/cloudinary';
 import { getErrorMessage } from '~/lib/errors';
 
-interface Props {
-  imageId: string;
-  ImageUploadSizeLimit: {
-    Value: number;
-    Caption: string;
-  };
-}
+import { useCloudinaryUpload } from './useCloudinaryUpload';
 
-export interface ImageUploadState {
-  imageId: string;
-  uploadState: UploadState;
-  uploadError: string;
-}
-
-export function useUploadImage(props: Props) {
-  const { imageId: initImageId, ImageUploadSizeLimit: SizeLimit } = props;
-
-  const { CLOUDINARY_CLOUD_NAME, CLOUDINARY_UPLOAD_RESET } = useCloudinary();
+export function useUploadImage(initImageId: string) {
+  const uploadToCloudinary = useCloudinaryUpload();
 
   const [imageId, setImageId] = useState(initImageId || '');
   const [uploadState, setUploadState] = useState(UploadState.Idle);
   const [error, setError] = useState('');
 
-  const removeImage = useCallback(() => {
-    setImageId('');
-  }, []);
-
   const uploadImage = useCallback(
     async (file: File) => {
       try {
         setError('');
-
-        if (file.size > SizeLimit.Value) {
-          throw new Error(
-            `Please upload images less than ${SizeLimit.Caption}`
-          );
-        }
-
         setImageId('');
-        setError('');
         setUploadState(UploadState.Uploading);
 
-        const result = await uploadToCloudinary(
-          file,
-          CLOUDINARY_CLOUD_NAME,
-          CLOUDINARY_UPLOAD_RESET
-        );
-
-        if (!result.success) {
-          throw new Error(result.err.message);
+        if (file.size > 2_000_000) {
+          throw new Error(`Provice an image less than 2MB in size`);
         }
-        setImageId(result.data.publicId);
+
+        const result = await uploadToCloudinary(file);
+        if (result instanceof Error) {
+          throw result;
+        }
+        setImageId(result.publicId);
         setUploadState(UploadState.Uploaded);
         setError('');
+        return result.publicId;
       } catch (error) {
         setUploadState(UploadState.Error);
         setError(getErrorMessage(error) || 'Upload failed, please try again');
       }
     },
-    [CLOUDINARY_CLOUD_NAME, CLOUDINARY_UPLOAD_RESET, SizeLimit]
+    [uploadToCloudinary]
   );
 
-  return { imageId, uploadState, uploadError: error, uploadImage, removeImage };
+  return { imageId, uploadState, error, uploadImage };
 }

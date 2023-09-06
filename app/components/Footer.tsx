@@ -1,10 +1,6 @@
 import { CenteredView } from './CenteredView';
 
-interface Props {
-  appTitle: string;
-}
-
-export function Footer(_: Props) {
+export function Footer() {
   return (
     <div className="flex flex-col items-stretch border-t border-stone-200 bg-white/80 backdrop-blur-sm">
       <CenteredView className="p-4">

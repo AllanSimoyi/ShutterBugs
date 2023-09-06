@@ -1,22 +1,26 @@
-import type { CustomFieldErrors, CustomFormFields } from '../lib/forms';
+import type { FieldErrors, FormFields } from '../lib/forms';
+import type { FetcherWithComponents } from '@remix-run/react';
+import type { ZodTypeAny, z } from 'zod';
 
-import { createContext, useContext } from 'react';
+import { createContext, useCallback, useContext, useMemo } from 'react';
 
-interface ContextProps<SchemaType extends Record<string, FormDataEntryValue>> {
+import { hasFieldErrors, hasFields, hasFormError } from '../lib/forms';
+
+interface ContextProps {
   formError?: string;
-  fields?: CustomFormFields<SchemaType>;
-  fieldErrors?: CustomFieldErrors<SchemaType>;
+  fields?: FormFields;
+  fieldErrors?: FieldErrors;
   isSubmitting?: boolean;
 }
 
-export const ActionContext = createContext<ContextProps<Record<any, any>>>({
+export const ActionContext = createContext<ContextProps>({
   formError: undefined,
   fields: {},
   fieldErrors: {},
   isSubmitting: false,
 });
 
-interface Props extends ContextProps<Record<string, FormDataEntryValue>> {
+interface Props extends ContextProps {
   children: React.ReactNode;
 }
 export function ActionContextProvider(props: Props) {
@@ -28,10 +32,8 @@ export function ActionContextProvider(props: Props) {
   );
 }
 
-function useActionContext<
-  SchemaType extends Record<string, FormDataEntryValue>
->() {
-  const context = useContext<ContextProps<SchemaType>>(ActionContext);
+function useActionContext() {
+  const context = useContext<ContextProps>(ActionContext);
   if (!context) {
     throw new Error(
       `useActionContext must be used within a ActionContextProvider`
@@ -40,26 +42,57 @@ function useActionContext<
   return context;
 }
 
-export function useField<SchemaType extends Record<string, FormDataEntryValue>>(
-  name: keyof SchemaType
-) {
-  const { fields, fieldErrors } = useActionContext<SchemaType>();
+export function useField(name: string) {
+  const { fields, fieldErrors } = useActionContext();
   return {
     value: fields?.[name],
     error: fieldErrors?.[name],
   };
 }
 
-export function useFormError<
-  SchemaType extends Record<string, FormDataEntryValue>
->() {
-  const { formError } = useActionContext<SchemaType>();
+export function useFormError() {
+  const { formError } = useActionContext();
   return formError;
 }
 
-export function useIsSubmitting<
-  SchemaType extends Record<string, FormDataEntryValue>
->() {
-  const { isSubmitting } = useActionContext<SchemaType>();
+export function useIsSubmitting() {
+  const { isSubmitting } = useActionContext();
   return isSubmitting;
+}
+
+export function useForm<T extends ZodTypeAny>(
+  fetcher: FetcherWithComponents<any>,
+  Schema: T
+) {
+  type SchemaKeys = keyof z.infer<typeof Schema>;
+
+  const getNameProp = useCallback((name: SchemaKeys) => {
+    return { name };
+  }, []);
+
+  const fieldErrors = useMemo(() => {
+    if (hasFieldErrors(fetcher.data)) {
+      return fetcher.data.fieldErrors as FieldErrors<SchemaKeys>;
+    }
+  }, [fetcher.data]);
+
+  const formError = useMemo(() => {
+    if (hasFormError(fetcher.data)) {
+      return fetcher.data.formError;
+    }
+  }, [fetcher.data]);
+
+  const fields = useMemo(() => {
+    if (hasFields(fetcher.data)) {
+      return fetcher.data.fields as FormFields<SchemaKeys>;
+    }
+  }, [fetcher.data]);
+
+  return {
+    getNameProp,
+    fieldErrors,
+    formError,
+    fields,
+    isProcessing: fetcher.state !== 'idle',
+  };
 }

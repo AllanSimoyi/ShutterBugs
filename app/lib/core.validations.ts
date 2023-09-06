@@ -1,10 +1,18 @@
-import type { BaseActionData } from './forms';
-import type { ZodError } from 'zod';
+import type { ActionData, FormFieldKey } from './forms';
 
 import { json } from '@remix-run/server-runtime';
 import { z } from 'zod';
 
-import { convertFieldErrorsToArray } from './forms';
+export enum RecordType {
+  User = 'User',
+  Subject = 'Subject',
+  Topic = 'Topic',
+}
+export const RECORD_TYPES = [
+  RecordType.User,
+  RecordType.Subject,
+  RecordType.Topic,
+] as const;
 
 export enum ResponseMessage {
   Unauthorised = "You're not authorised to access this resource",
@@ -21,29 +29,18 @@ export enum StatusCode {
   NotFound = 404,
 }
 
+export const INVALID_VALUES_FROM_SERVER =
+  'Received invalid values from server, please contact the system maintainers';
+
 export function containsNumbers(str: string) {
   return Boolean(str.match(/\d/));
 }
 
-export const CleanPositiveIntSchema = z
-  .number({
-    invalid_type_error: 'Provide a valid number',
-    required_error: 'Provide a number',
-  })
-  .int({ message: 'Enter a whole number (integer)' })
-  .positive({ message: 'Enter a positive number' });
-export const StringNumber = z
-  .string({
-    invalid_type_error: 'Provide a valid number',
-    required_error: 'Provide a number',
-  })
-  .regex(/\d+/, { message: 'Enter a valid number' })
-  .transform(Number);
-export const PerhapsEmptyRecordIdSchema = z
-  .string({
-    invalid_type_error: 'Provide a valid record ID',
-  })
-  .max(50, { message: 'Use less than 51 characters for the record ID' });
+export const StringNumber = z.coerce.number({
+  invalid_type_error: 'Provide a valid number',
+  required_error: 'Provide a number',
+});
+
 export const PresentStringSchema = z
   .string({
     invalid_type_error: 'Provide a valid string',
@@ -51,102 +48,23 @@ export const PresentStringSchema = z
   })
   .min(1, { message: 'Use at least 1 character for the string' });
 
-export const PositiveDecimalSchema = z
-  .number({
-    invalid_type_error: 'Provide a valid number',
-    required_error: 'Provide a number',
-  })
-  .positive({ message: 'Enter a positive' })
-  .or(StringNumber)
-  .refine((n) => n > 0);
-
-export const PerhapsZeroDecimalSchema = z
-  .number({
-    invalid_type_error: 'Provide a valid number',
-    required_error: 'Provide a number',
-  })
-  .min(0, { message: 'Provide a number' })
-  .or(StringNumber)
-  .refine((n) => n >= 0);
-
-export const PerhapsZeroIntSchema = z
-  .number({
-    invalid_type_error: 'Provide a valid number',
-  })
-  .int({ message: 'Enter a whole number (integer)' })
-  .min(0)
-  .or(StringNumber)
-  .refine((n) => n >= 0);
-
-export const PositiveIntSchema = z
-  .number({
-    invalid_type_error: 'Provide a valid number',
-    required_error: 'Provide a number',
-  })
-  .int({ message: 'Enter a whole number (integer)' })
-  .min(1, { message: 'Provide a number' })
-  .or(StringNumber)
-  .refine((n) => n > 0);
-
-export const RecordIdSchema = z
-  .string({
-    invalid_type_error: 'Provide a valid record ID',
-    required_error: 'Provide a record ID',
-  })
-  .min(1, { message: 'Provide a valid record ID' })
-  .max(50, { message: 'Please use less than 50 characters for the record ID' });
-
-export function ComposeRecordIdSchema(identifier: string) {
-  return z
-    .number({
-      invalid_type_error: `Provide a valid ${identifier} ID`,
-      required_error: `Provide a ${identifier} ID`,
-    })
-    .int({ message: `Provide a valid ${identifier} ID` })
-    .min(1, { message: `Provide a valid ${identifier} ID` })
-    .or(StringNumber)
-    .refine((n) => n > 0);
+export function ComposeRecordIdSchema(
+  identifier: string,
+  optional?: 'optional'
+) {
+  const Schema = z.string({
+    invalid_type_error: `Enter a valid ${identifier}`,
+    required_error: `Enter a ${identifier}`,
+  });
+  if (optional) {
+    return Schema;
+  }
+  return Schema.min(1, { message: `Enter a valid ${identifier}` });
 }
-
-export const DateSchema = z.preprocess(
-  (arg) => {
-    if (typeof arg == 'string' || arg instanceof Date) {
-      return new Date(arg);
-    }
-  },
-  z.date({
-    invalid_type_error: 'Provide a valid date',
-    required_error: 'Provide a date',
-  })
-);
-
-export const BooleanSchema = z.preprocess(
-  (arg) => {
-    if (typeof arg === 'string') {
-      return arg === 'true';
-    }
-  },
-  z.boolean({
-    invalid_type_error: 'Provide a valid boolean (yes/no)',
-    required_error: 'Provide yes/no input',
-  })
-);
+export const RecordIdSchema = ComposeRecordIdSchema('record ID');
 
 export function hasSuccess(data: unknown): data is { success: boolean } {
-  return typeof data === 'object' && data !== null && 'success' in data;
-}
-
-export type Result<Ok, Err> =
-  | { success: true; data: Ok }
-  | { success: false; err: Err };
-
-export function stringifyZodError(zodError: ZodError) {
-  const { fieldErrors, formErrors } = zodError.flatten();
-  const allErrors = [
-    ...(convertFieldErrorsToArray(fieldErrors) || []),
-    ...formErrors,
-  ];
-  return allErrors.join(', ');
+  return z.object({ success: z.literal(true) }).safeParse(data).success;
 }
 
 export function getValidatedId(rawId: any) {
@@ -159,14 +77,14 @@ export function getValidatedId(rawId: any) {
   return result.data;
 }
 
-export function badRequest(data: BaseActionData) {
-  return json(data, { status: 400 });
+export function badRequest<F extends FormFieldKey = string>(
+  data: ActionData<F>,
+  _?: Record<F, any>
+) {
+  return json(data, { status: StatusCode.BadRequest });
 }
 
-export function processBadRequest<DataType>(
-  zodError: z.ZodError<DataType>,
-  fields: any
-) {
+export function processBadRequest(zodError: z.ZodError<any>, fields: any) {
   const { formErrors, fieldErrors } = zodError.flatten();
   return badRequest({
     fields,
@@ -185,3 +103,11 @@ export function getQueryParams<T extends string>(url: string, params: T[]) {
     {} as Record<T, string | undefined>
   );
 }
+
+export const TitleSchema = z
+  .string({
+    required_error: 'Please enter the title',
+    invalid_type_error: 'Please provide valid input for the title',
+  })
+  .min(1, 'Please enter the title first')
+  .max(100, 'Please use less than 200 characters for the title');

@@ -22,7 +22,7 @@ export function ProfilePic(props: Props) {
     <img
       alt={fullName}
       src={imageSrc}
-      className="h-36 w-36 rounded-full object-cover"
+      className="h-36 w-36 rounded-full border-2 border-white object-cover"
     />
   );
 }

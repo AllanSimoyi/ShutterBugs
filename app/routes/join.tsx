@@ -86,12 +86,12 @@ export default function CreateAccount() {
         <div className="grow" />
         <Form
           method="post"
-          className="flex w-full flex-col items-stretch justify-center gap-12 p-4 sm:w-[80%] md:w-[60%] lg:w-[40%]"
+          className="flex w-full flex-col items-stretch justify-center gap-2 p-4 sm:w-[80%] md:w-[60%] lg:w-[40%]"
         >
           <ActionContextProvider {...actionData} isSubmitting={isProcessing}>
             <div className="flex flex-col items-center justify-center">
               <Link to={AppLinks.Home}>
-                <AppTitle title={PRODUCT_NAME} />
+                <AppTitle />
               </Link>
             </div>
             <div className="flex flex-col items-stretch gap-4">
@@ -107,7 +107,7 @@ export default function CreateAccount() {
                 <InlineAlert>{actionData.formError}</InlineAlert>
               )}
             </div>
-            <div className="flex w-full flex-col items-stretch gap-4">
+            <div className="flex w-full flex-col items-stretch gap-4 py-6">
               <PrimaryButton type="submit" disabled={isProcessing}>
                 {isProcessing ? 'Creating Account...' : 'Create Account'}
               </PrimaryButton>
@@ -119,7 +119,7 @@ export default function CreateAccount() {
         </Form>
         <div className="grow" />
       </div>
-      <Footer appTitle={PRODUCT_NAME} />
+      <Footer />
     </div>
   );
 }

@@ -1,7 +1,13 @@
+import icon from '~/../public/images/Shutterbugs_Icon.png';
+import logo from '~/../public/images/Shutterbugs_logo.png';
+
 interface Props {
-  title: string;
+  isIcon?: boolean;
 }
 
-export function AppTitle({ title }: Props) {
-  return <h1 className="text-lg text-stone-600">{title}</h1>;
+export function AppTitle({ isIcon }: Props) {
+  if (isIcon) {
+    return <img src={icon} alt="ShutterBugs" />;
+  }
+  return <img src={logo} alt="ShutterBugs" />;
 }

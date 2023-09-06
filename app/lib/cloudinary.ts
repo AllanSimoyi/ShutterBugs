@@ -1,5 +1,3 @@
-import type { Result } from './core.validations';
-
 import { getErrorMessage } from './errors';
 
 export enum UploadState {
@@ -21,9 +19,8 @@ export async function uploadToCloudinary(
   CLOUD_NAME: string,
   UPLOAD_RESET: string
 ) {
-  return new Promise<Result<ImageUploadResult, Error>>(async (resolve) => {
+  return new Promise(async (resolve) => {
     const formData = new FormData();
-
     formData.append('file', file);
     formData.append('upload_preset', UPLOAD_RESET);
     formData.append('tags', 'rte');
@@ -42,21 +39,9 @@ export async function uploadToCloudinary(
       }
       const { public_id: publicId, url, width, height } = result;
 
-      return resolve({
-        success: true,
-        data: { publicId, url, width, height },
-      });
+      return resolve({ publicId, url, width, height } as const);
     } catch (error) {
-      const errorMessage =
-        getErrorMessage(error) ||
-        'Something went wrong uploading the image, please try again';
-
-      console.error('Cloudinary upload error', errorMessage);
-
-      return resolve({
-        success: false,
-        err: new Error(errorMessage),
-      });
+      return resolve(new Error(getErrorMessage(error)));
     }
   });
 }

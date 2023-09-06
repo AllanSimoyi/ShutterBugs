@@ -87,13 +87,13 @@ export default function LoginPage() {
         <div className="grow" />
         <Form
           method="post"
-          className="flex w-full flex-col items-stretch justify-center gap-12 p-4 sm:w-[80%] md:w-[60%] lg:w-[40%]"
+          className="flex w-full flex-col items-stretch justify-center gap-2 p-4 sm:w-[80%] md:w-[60%] lg:w-[40%]"
         >
           <ActionContextProvider {...actionData} isSubmitting={isProcessing}>
             <input type="hidden" name="redirectTo" value={redirectTo} />
             <div className="flex flex-col items-center justify-center">
               <Link to={AppLinks.Home}>
-                <AppTitle title={PRODUCT_NAME} />
+                <AppTitle />
               </Link>
             </div>
             <div className="flex flex-col items-stretch gap-4">
@@ -103,7 +103,7 @@ export default function LoginPage() {
                 <InlineAlert>{actionData.formError}</InlineAlert>
               )}
             </div>
-            <div className="flex flex-col items-stretch gap-4">
+            <div className="flex flex-col items-stretch gap-4 py-6">
               <PrimaryButton type="submit" disabled={isProcessing}>
                 {isProcessing ? 'Logging In...' : 'Log In'}
               </PrimaryButton>
@@ -115,7 +115,7 @@ export default function LoginPage() {
         </Form>
         <div className="grow" />
       </div>
-      <Footer appTitle={PRODUCT_NAME} />
+      <Footer />
     </div>
   );
 }

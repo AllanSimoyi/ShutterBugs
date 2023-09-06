@@ -5,7 +5,7 @@ export function SearchBox(props: React.InputHTMLAttributes<HTMLInputElement>) {
     <div
       className={twMerge(
         'm-[2px] flex grow flex-row items-center rounded-md focus-within:ring-2 focus-within:ring-stone-50',
-        'bg-stone-100 transition-all duration-200 hover:bg-stone-200 focus:bg-stone-100'
+        'bg-stone-200 transition-all duration-200 hover:bg-stone-200 focus:bg-stone-100'
       )}
     >
       <div className="pointer-events-none flex items-center pl-2">

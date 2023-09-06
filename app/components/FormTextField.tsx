@@ -4,17 +4,15 @@ import { twMerge } from 'tailwind-merge';
 
 import { useField, useIsSubmitting } from './ActionContextProvider';
 
-type Props<SchemaType extends Record<string, any>> = ComponentProps<'input'> & {
+type Props = ComponentProps<'input'> & {
   customRef?: ComponentProps<'input'>['ref'];
-  name: keyof SchemaType;
+  name: string;
   label?: string | undefined;
 };
-export function FormTextField<SchemaType extends Record<string, any>>(
-  props: Props<SchemaType>
-) {
+export function FormTextField(props: Props) {
   const { customRef, name, label, className, ...restOfProps } = props;
 
-  const { value, error } = useField<SchemaType>(name);
+  const { value, error } = useField(name);
   const isSubmitting = useIsSubmitting();
 
   return (

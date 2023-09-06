@@ -1,12 +1,10 @@
 import { z } from 'zod';
 
-const Schema = z.object({
-  message: z.string(),
-});
 export function getErrorMessage(error: unknown) {
+  const Schema = z.object({ message: z.string() });
   const result = Schema.safeParse(error);
   if (!result.success) {
-    return undefined;
+    return 'Something went wrong, please try again';
   }
   return result.data.message;
 }

@@ -1,29 +1,18 @@
 import { z } from 'zod';
 
-export type CustomFormFields<SchemaType = any> = {
-  [T in keyof SchemaType]: string | File;
-};
-export type CustomFieldErrors<SchemaType = any> = {
-  [T in keyof SchemaType]: string[] | undefined;
-};
+export type FormFieldKey = string | number | symbol;
 
-export interface BaseActionData {
+export type FormFields<K extends FormFieldKey = string> = Partial<
+  Record<K, string | File>
+>;
+export type FieldErrors<K extends FormFieldKey = string> = Partial<
+  Record<K, string[] | undefined>
+>;
+
+export interface ActionData<K extends FormFieldKey = string> {
   formError?: string;
-  fields?: {
-    [index: string]: string | File;
-  };
-  fieldErrors?: {
-    [index: string]: string[] | undefined;
-  };
-}
-
-const ResponseRecordedSchema = z.object({
-  responseRecorded: z.boolean(),
-});
-export function hasResponseRecorded(
-  data: unknown
-): data is z.infer<typeof ResponseRecordedSchema> {
-  return ResponseRecordedSchema.safeParse(data).success;
+  fields?: FormFields<K>;
+  fieldErrors?: FieldErrors<K>;
 }
 
 const FormErrorSchema = z.object({
@@ -44,6 +33,19 @@ export function hasFieldErrors(
   return FieldErrorsSchema.safeParse(data).success;
 }
 
+export function getFieldErrors(data: unknown) {
+  if (!hasFieldErrors(data)) {
+    return undefined;
+  }
+  const allFalsy = Object.keys(data.fieldErrors)
+    .map((key) => data.fieldErrors[key])
+    .filter((error) => !error || !error.length);
+  if (allFalsy) {
+    return undefined;
+  }
+  return data.fieldErrors;
+}
+
 const FieldsSchema = z.object({
   fields: z.record(z.string()),
 });
@@ -60,12 +62,7 @@ export function hasErrorMessage(
   return WithErrMsgSchema.safeParse(data).success;
 }
 
-export function convertFieldErrorsToArray(
-  fieldErrors: BaseActionData['fieldErrors']
-) {
-  if (!fieldErrors) {
-    return undefined;
-  }
+export function fieldErrorsToArr(fieldErrors: FieldErrors) {
   return Object.keys(fieldErrors)
     .map((key) => {
       const errors = fieldErrors[key];

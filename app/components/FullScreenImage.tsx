@@ -7,7 +7,7 @@ import { useCloudinary } from './CloudinaryContextProvider';
 
 interface Props {
   close: () => void;
-  post: { imageId: string } | undefined;
+  post: string | undefined;
 }
 export function FullScreenImage(props: Props) {
   const { post, close } = props;
@@ -18,7 +18,7 @@ export function FullScreenImage(props: Props) {
     if (!post) {
       return undefined;
     }
-    return CloudinaryUtil.image(post.imageId)
+    return CloudinaryUtil.image(post)
       .roundCorners(byRadius(5))
       .format('auto')
       .quality('auto')
