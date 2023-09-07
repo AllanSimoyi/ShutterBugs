@@ -18,7 +18,6 @@ import { FormTextField } from '~/components/FormTextField';
 import { InlineAlert } from '~/components/InlineAlert';
 import { PrimaryButton } from '~/components/PrimaryButton';
 import { SecondaryButtonLink } from '~/components/SecondaryButton';
-import { EmailSchema } from '~/lib/auth.validations';
 import { PRODUCT_NAME } from '~/lib/constants';
 import {
   badRequest,
@@ -46,7 +45,7 @@ export async function loader({ request }: LoaderArgs) {
 }
 
 const Schema = z.object({
-  email: EmailSchema,
+  phone: z.string().min(6).max(15),
   password: z.string().min(1),
   redirectTo: z.string(),
 });
@@ -57,9 +56,9 @@ export async function action({ request }: ActionArgs) {
   if (!result.success) {
     return processBadRequest(result.error, fields);
   }
-  const { email, password } = result.data;
+  const { phone, password } = result.data;
 
-  const user = await verifyLogin(email, password);
+  const user = await verifyLogin(phone, password);
   if (!user) {
     return badRequest({ fields, formError: `Incorrect credentials` });
   }
@@ -97,7 +96,7 @@ export default function LoginPage() {
               </Link>
             </div>
             <div className="flex flex-col items-stretch gap-4">
-              <FormTextField name="email" type="email" label="Email Address" />
+              <FormTextField name="phone" type="phone" label="Phone Number" />
               <FormTextField name="password" label="Password" type="password" />
               {hasFormError(actionData) && (
                 <InlineAlert>{actionData.formError}</InlineAlert>

@@ -5,6 +5,7 @@ import { useCallback, useState } from 'react';
 import { EmptyList } from './EmptyList';
 import { FullScreenImage } from './FullScreenImage';
 import { PostCard } from './PostCard';
+import { PrefetchFullImages } from './PrefetchFullImages';
 
 interface Props {
   posts: ComponentProps<typeof PostCard>[];
@@ -28,6 +29,7 @@ export function Catalog(props: Props) {
   return (
     <>
       <FullScreenImage post={selectedImage} close={closeFullScreenImage} />
+      <PrefetchFullImages imageIds={posts.map((post) => post.imageId)} />
       {!!posts.length && (
         <div className="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-3">
           {posts.map((post) => (

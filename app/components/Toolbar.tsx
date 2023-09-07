@@ -17,7 +17,7 @@ export function Toolbar(props: ToolbarProps) {
   const { currentUserName, hideSearch } = props;
 
   return (
-    <header className="sticky top-0 z-50 flex w-full flex-col items-stretch border border-stone-200 bg-white/80 backdrop-blur-lg">
+    <header className="sticky top-0 z-10 flex w-full flex-col items-stretch border border-stone-200 bg-white/80 backdrop-blur-lg">
       <CenteredView>
         <div className="grid grid-cols-2 gap-2 p-2 lg:grid-cols-3">
           <div className="order-1 flex flex-col items-start justify-center">

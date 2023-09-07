@@ -12,22 +12,22 @@ export async function getUserById(id: User['id']) {
   return prisma.user.findUnique({ where: { id } });
 }
 
-export async function getUserByEmail(email: User['email']) {
-  return prisma.user.findUnique({ where: { email } });
+export async function getUserByPhone(phone: User['phone']) {
+  return prisma.user.findUnique({ where: { phone } });
 }
 
 interface CreateUserProps {
-  email: string;
+  phone: string;
   fullName: string;
   imageId: string;
   password: string;
 }
 export async function createUser(props: CreateUserProps) {
-  const { email, fullName, imageId, password } = props;
+  const { phone, fullName, imageId, password } = props;
 
   return prisma.user.create({
     data: {
-      email,
+      phone,
       fullName,
       imageId,
       hashedPassword: await createPasswordHash(password),
@@ -35,13 +35,13 @@ export async function createUser(props: CreateUserProps) {
   });
 }
 
-export async function deleteUserByEmail(email: User['email']) {
-  return prisma.user.delete({ where: { email } });
+export async function deleteUserByPhone(phone: User['phone']) {
+  return prisma.user.delete({ where: { phone } });
 }
 
-export async function verifyLogin(email: User['email'], password: string) {
+export async function verifyLogin(phone: User['phone'], password: string) {
   const userWithPassword = await prisma.user.findUnique({
-    where: { email },
+    where: { phone },
   });
   if (!userWithPassword) {
     return null;

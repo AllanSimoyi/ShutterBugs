@@ -1,9 +1,9 @@
-import { byRadius } from '@cloudinary/url-gen/actions/roundCorners';
 import { Dialog, Transition } from '@headlessui/react';
-import { Fragment, useMemo } from 'react';
+import { Fragment } from 'react';
+import { TransformComponent, TransformWrapper } from 'react-zoom-pan-pinch';
 import { twMerge } from 'tailwind-merge';
 
-import { useCloudinary } from './CloudinaryContextProvider';
+import { useFullImage } from '~/hooks/useFullImage';
 
 interface Props {
   close: () => void;
@@ -12,18 +12,7 @@ interface Props {
 export function FullScreenImage(props: Props) {
   const { post, close } = props;
 
-  const { CloudinaryUtil } = useCloudinary();
-
-  const postImage = useMemo(() => {
-    if (!post) {
-      return undefined;
-    }
-    return CloudinaryUtil.image(post)
-      .roundCorners(byRadius(5))
-      .format('auto')
-      .quality('auto')
-      .toURL();
-  }, [CloudinaryUtil, post]);
+  const postImage = useFullImage(post);
 
   return (
     <Transition appear show={!!post} as={Fragment}>
@@ -58,17 +47,24 @@ export function FullScreenImage(props: Props) {
           >
             <Dialog.Panel
               className={twMerge(
-                'h-auto overflow-hidden rounded-md bg-white/10 align-middle md:h-full',
+                'h-full overflow-hidden rounded-md bg-transparent align-middle md:h-full',
                 'transform shadow-xl transition-all duration-300',
-                'flex flex-col items-stretch justify-center'
+                'flex max-h-full flex-row items-center justify-center'
               )}
             >
               {!!postImage && (
-                <img
-                  src={postImage}
-                  alt="Post"
-                  className="max-h-full object-contain"
-                />
+                <TransformWrapper>
+                  <TransformComponent
+                    wrapperClass="min-h-full"
+                    contentClass="min-h-full flex flex-col justify-center items-center"
+                  >
+                    <img
+                      src={postImage}
+                      alt="Post"
+                      className="h-full object-contain"
+                    />
+                  </TransformComponent>
+                </TransformWrapper>
               )}
             </Dialog.Panel>
           </Transition.Child>

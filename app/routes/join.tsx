@@ -12,16 +12,12 @@ import { FormTextField } from '~/components/FormTextField';
 import { InlineAlert } from '~/components/InlineAlert';
 import { PrimaryButton } from '~/components/PrimaryButton';
 import { SecondaryButtonLink } from '~/components/SecondaryButton';
-import {
-  EmailSchema,
-  FullNameSchema,
-  PasswordSchema,
-} from '~/lib/auth.validations';
+import { FullNameSchema, PasswordSchema } from '~/lib/auth.validations';
 import { PRODUCT_NAME } from '~/lib/constants';
 import { badRequest, processBadRequest } from '~/lib/core.validations';
 import { getRawFormFields, hasFormError } from '~/lib/forms';
 import { AppLinks } from '~/lib/links';
-import { createUser, getUserByEmail } from '~/lib/user.server';
+import { createUser, getUserByPhone } from '~/lib/user.server';
 import { createUserSession, getUserId } from '~/session.server';
 
 export const meta: MetaFunction = () => {
@@ -30,7 +26,7 @@ export const meta: MetaFunction = () => {
 
 const Schema = z
   .object({
-    email: EmailSchema,
+    phone: z.string().min(6).max(15),
     fullName: FullNameSchema,
     password: PasswordSchema,
     passwordConfirmation: PasswordSchema,
@@ -54,18 +50,18 @@ export async function action({ request }: ActionArgs) {
   if (!result.success) {
     return processBadRequest(result.error, fields);
   }
-  const { email, fullName, password } = result.data;
+  const { phone, fullName, password } = result.data;
 
-  const existingUser = await getUserByEmail(email);
+  const existingUser = await getUserByPhone(phone);
   if (existingUser) {
     return badRequest({
       fields,
-      fieldErrors: { email: ['Email already used by another user'] },
+      fieldErrors: { phone: ['Phone number already used by another user'] },
       formError: undefined,
     });
   }
 
-  const user = await createUser({ email, fullName, password, imageId: '' });
+  const user = await createUser({ phone, fullName, password, imageId: '' });
   return createUserSession({
     request,
     userId: user.id,
@@ -96,7 +92,7 @@ export default function CreateAccount() {
             </div>
             <div className="flex flex-col items-stretch gap-4">
               <FormTextField name="fullName" type="text" label="Name" />
-              <FormTextField name="email" type="email" label="Email" />
+              <FormTextField name="phone" type="tel" label="Phone" />
               <FormTextField name="password" label="Password" type="password" />
               <FormTextField
                 name="passwordConfirmation"

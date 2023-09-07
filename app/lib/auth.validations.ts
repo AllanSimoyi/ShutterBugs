@@ -39,13 +39,13 @@ export function parseRedirectUrl(url: string) {
 
 export type CurrentUser = {
   id: string;
-  email: string;
+  phone: string;
 };
 
 export function userToCurrentUser(user: User) {
   const currentUser: CurrentUser = {
     id: user.id,
-    email: user.email,
+    phone: user.phone,
   };
   return currentUser;
 }

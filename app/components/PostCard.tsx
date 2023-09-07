@@ -3,7 +3,7 @@ import 'react-gallery-carousel/dist/index.css';
 import { fill } from '@cloudinary/url-gen/actions/resize';
 import { byRadius } from '@cloudinary/url-gen/actions/roundCorners';
 import { useCallback, useMemo } from 'react';
-import { InfoCircle } from 'tabler-icons-react';
+import { InfoCircle, User } from 'tabler-icons-react';
 import { twMerge } from 'tailwind-merge';
 
 import { capitalize } from '~/lib/strings';
@@ -65,11 +65,18 @@ export function PostCard(props: Props) {
       {!!props.owner && (
         <div className="flex flex-col items-stretch p-4">
           <div className="flex flex-row items-center gap-4 rounded-lg p-2 text-white">
-            <img
-              src={ownerImage}
-              alt={props.owner.fullName}
-              className="h-12 w-12 rounded-full object-cover"
-            />
+            {!!ownerImage && (
+              <img
+                src={ownerImage}
+                alt={props.owner.fullName}
+                className="h-12 w-12 rounded-full object-cover"
+              />
+            )}
+            {!ownerImage && (
+              <div className="flex h-12 w-12 flex-col items-center justify-center rounded-full bg-stone-100">
+                <User className="text-xl font-semibold text-stone-800" />
+              </div>
+            )}
             <div className="flex flex-col items-start">
               <span className="text-base tracking-wider">
                 {props.owner.fullName}
