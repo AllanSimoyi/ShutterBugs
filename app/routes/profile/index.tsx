@@ -27,14 +27,16 @@ export async function loader({ request }: LoaderArgs) {
         imageId: true,
         desc: true,
         createdAt: true,
+        user: { select: { id: true, imageId: true, fullName: true } },
       },
       orderBy: { createdAt: 'desc' },
     })
     .then((posts) => {
-      return posts.map(({ id: postId, desc, ...post }) => ({
+      return posts.map(({ id: postId, desc, user, ...post }) => ({
         ...post,
         postId,
         desc: desc || '',
+        owner: user,
         createdAt: dayjs(post.createdAt).fromNow(),
       }));
     });
@@ -55,7 +57,7 @@ export default function ProfilePage() {
           className: twMerge('border-2 border-stone-200 rounded-lg shadow-xl'),
         }}
       >
-        <div className="flex h-[150px] flex-col items-stretch rounded-t-lg bg-stone-100" />
+        <div className="flex h-[150px] flex-col items-stretch rounded-t-lg border-b-2 border-stone-200 bg-stone-100 shadow" />
         <div className="flex -translate-y-24 flex-col items-start gap-6 p-6">
           <ProfilePic
             imageId={currentUser.imageId}
@@ -67,13 +69,7 @@ export default function ProfilePage() {
               {posts.length} {posts.length === 1 ? 'photo' : 'photos'}
             </span>
           </div>
-          <Catalog
-            posts={posts.map((post) => ({
-              ...post,
-              owner: undefined,
-              onSelect: () => {},
-            }))}
-          />
+          <Catalog posts={posts} />
         </div>
       </CenteredView>
     </div>

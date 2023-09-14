@@ -13,6 +13,9 @@ const EnvSchema = z.object({
 
   DEVELOPER_WEBSITE_LINK: PresentStringSchema,
   HF_TOKEN: PresentStringSchema,
+
+  UNSPLASH_KEY: PresentStringSchema,
+  UNSPLASH_SECRET: PresentStringSchema,
 });
 
 const result = EnvSchema.safeParse(process.env);

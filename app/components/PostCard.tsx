@@ -2,29 +2,26 @@ import 'react-gallery-carousel/dist/index.css';
 
 import { fill } from '@cloudinary/url-gen/actions/resize';
 import { byRadius } from '@cloudinary/url-gen/actions/roundCorners';
+import { Link } from '@remix-run/react';
 import { useCallback, useMemo } from 'react';
-import { InfoCircle, User } from 'tabler-icons-react';
 import { twMerge } from 'tailwind-merge';
 
-import { capitalize } from '~/lib/strings';
+import { AppLinks } from '~/lib/links';
 
 import { useCloudinary } from './CloudinaryContextProvider';
+import { Desc } from './Desc';
+import { Owner } from './Owner';
 
-type BaseProps = {
+interface Props {
+  createdAt: string;
   postId: string;
   imageId: string;
   desc: string | undefined;
-  onSelect: () => void;
-};
-
-type Props =
-  | ({ owner: undefined } & BaseProps)
-  | ({
-      owner: { id: string; imageId: string; fullName: string };
-      createdAt: string;
-    } & BaseProps);
+  owner: { id: string; imageId: string; fullName: string };
+}
 
 export function PostCard(props: Props) {
+  const { createdAt, postId, imageId, desc, owner } = props;
   const { CloudinaryUtil } = useCloudinary();
 
   const getCloudinaryImage = useCallback(
@@ -40,20 +37,12 @@ export function PostCard(props: Props) {
   );
 
   const postImage = useMemo(() => {
-    return getCloudinaryImage(props.imageId, true);
-  }, [getCloudinaryImage, props.imageId]);
-
-  const ownerImage = useMemo(() => {
-    if (!props.owner) {
-      return '';
-    }
-    return getCloudinaryImage(props.owner.imageId, false);
-  }, [getCloudinaryImage, props.owner]);
+    return getCloudinaryImage(imageId, true);
+  }, [getCloudinaryImage, imageId]);
 
   return (
-    <button
-      type="button"
-      onClick={props.onSelect}
+    <Link
+      to={AppLinks.Post(postId)}
       className={twMerge(
         'group flex h-[80vh] flex-col items-stretch rounded-md bg-cover bg-bottom bg-no-repeat',
         'transition-all duration-300 hover:ring-2 hover:ring-stone-600'
@@ -62,44 +51,13 @@ export function PostCard(props: Props) {
         backgroundImage: `linear-gradient(to top, rgba(225, 225, 225, 0), rgba(0, 0, 0, 0.9)), url('${postImage}')`,
       }}
     >
-      {!!props.owner && (
-        <div className="flex flex-col items-stretch p-4">
-          <div className="flex flex-row items-center gap-4 rounded-lg p-2 text-white">
-            {!!ownerImage && (
-              <img
-                src={ownerImage}
-                alt={props.owner.fullName}
-                className="h-12 w-12 rounded-full object-cover"
-              />
-            )}
-            {!ownerImage && (
-              <div className="flex h-12 w-12 flex-col items-center justify-center rounded-full bg-stone-100">
-                <User className="text-xl font-semibold text-stone-800" />
-              </div>
-            )}
-            <div className="flex flex-col items-start">
-              <span className="text-base tracking-wider">
-                {props.owner.fullName}
-              </span>
-              <span className="text-xs font-normal">{props.createdAt}</span>
-            </div>
-          </div>
-        </div>
-      )}
+      <Owner {...owner} createdAt={createdAt} className="p-4 text-white" />
       <div className="grow" />
-      {props.desc && (
-        <div className="flex flex-col items-start p-4 transition-all duration-300">
-          <span
-            className={twMerge(
-              'bg-black/40 p-2 text-start text-sm font-normal tracking-wider text-white/80',
-              'flex flex-row items-start gap-2 rounded-lg'
-            )}
-          >
-            <InfoCircle size={20} />
-            <span>{capitalize(props.desc)}</span>
-          </span>
+      {desc && (
+        <div className="flex flex-col items-start p-4">
+          <Desc>{desc}</Desc>
         </div>
       )}
-    </button>
+    </Link>
   );
 }
