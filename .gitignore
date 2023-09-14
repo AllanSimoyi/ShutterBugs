@@ -9,6 +9,7 @@ node_modules
 
 /build
 /public/build
+/public/wa
 .env
 
 /cypress/screenshots
