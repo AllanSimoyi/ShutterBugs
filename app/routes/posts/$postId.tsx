@@ -47,7 +47,7 @@ export default function PostId() {
   const imageUrl = useFullImage(post.imageId);
   return (
     <div className="flex min-h-full flex-col items-stretch">
-      <Toolbar currentUserName={user?.fullName || ''} />
+      <Toolbar hideSearch currentUserName={user?.fullName || ''} />
       <div className="flex grow flex-col items-stretch py-12">
         <CenteredView
           className="px-2"

@@ -1,12 +1,14 @@
 import 'react-gallery-carousel/dist/index.css';
 
+import { source } from '@cloudinary/url-gen/actions/overlay';
 import { fill } from '@cloudinary/url-gen/actions/resize';
 import { byRadius } from '@cloudinary/url-gen/actions/roundCorners';
-import { Link } from '@remix-run/react';
+import { Position } from '@cloudinary/url-gen/qualifiers';
+import { compass } from '@cloudinary/url-gen/qualifiers/gravity';
+import { text } from '@cloudinary/url-gen/qualifiers/source';
+import { TextStyle } from '@cloudinary/url-gen/qualifiers/textStyle';
 import { useCallback, useMemo } from 'react';
 import { twMerge } from 'tailwind-merge';
-
-import { AppLinks } from '~/lib/links';
 
 import { useCloudinary } from './CloudinaryContextProvider';
 import { Desc } from './Desc';
@@ -21,28 +23,45 @@ interface Props {
 }
 
 export function PostCard(props: Props) {
-  const { createdAt, postId, imageId, desc, owner } = props;
+  const { createdAt, imageId, desc, owner } = props;
   const { CloudinaryUtil } = useCloudinary();
 
   const getCloudinaryImage = useCallback(
     (imageId: string, large: boolean) => {
-      const imageSize = large ? 400 : 72;
-      const resized = CloudinaryUtil.image(imageId).resize(
-        fill().aspectRatio('1:1').width(imageSize).height(imageSize)
-      );
+      const base = CloudinaryUtil.image(imageId);
+
+      const baseResize = fill().aspectRatio('1:1');
+      const imageSize = large ? undefined : 400;
+      const resized = imageSize
+        ? base.resize(baseResize.width(imageSize).height(imageSize))
+        : base
+            .resize(baseResize)
+            .overlay(
+              source(
+                text(owner.fullName, new TextStyle('Poppins', 75)).textColor(
+                  '#ffffff60'
+                )
+              ).position(new Position().gravity(compass('south')).offsetY(40))
+            );
+
       const rounded = large ? resized.roundCorners(byRadius(5)) : resized;
       return rounded.format('auto').quality('auto').toURL();
     },
-    [CloudinaryUtil]
+    [CloudinaryUtil, owner.fullName]
   );
 
-  const postImage = useMemo(() => {
-    return getCloudinaryImage(imageId, true);
+  const [postImage, fullPostImage] = useMemo(() => {
+    return [
+      getCloudinaryImage(imageId, false),
+      getCloudinaryImage(imageId, true),
+    ];
   }, [getCloudinaryImage, imageId]);
 
   return (
-    <Link
-      to={AppLinks.Post(postId)}
+    <a
+      href={fullPostImage}
+      target="_blank"
+      rel="noopener noreferrer"
       className={twMerge(
         'group flex h-[80vh] flex-col items-stretch rounded-md bg-cover bg-bottom bg-no-repeat',
         'transition-all duration-300 hover:ring-2 hover:ring-stone-600'
@@ -58,6 +77,6 @@ export function PostCard(props: Props) {
           <Desc>{desc}</Desc>
         </div>
       )}
-    </Link>
+    </a>
   );
 }

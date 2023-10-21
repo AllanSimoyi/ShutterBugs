@@ -6,10 +6,14 @@ import { createApi } from 'unsplash-js';
   });
   async function fetchUnsplashImages() {
     const result = await unsplash.photos.list({});
-    const page = result.response?.results
-      .slice(0, 20)
-      .map((el) => el.urls.full);
-    console.log('page', page);
+    const page = result.response?.results.slice(0, 500).map((el) => {
+      console.log(el.user);
+      return el.urls.full;
+    });
+    return page || [];
   }
-  await fetchUnsplashImages();
+  for (let i = 0; i < 40; i++) {
+    const urls = await fetchUnsplashImages();
+    console.log(urls);
+  }
 })();

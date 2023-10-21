@@ -50,7 +50,7 @@ export default function ProfilePage() {
 
   return (
     <div className="flex min-h-full flex-col items-stretch">
-      <Toolbar currentUserName={currentUser.fullName || ''} />
+      <Toolbar hideSearch currentUserName={currentUser.fullName || ''} />
       <CenteredView
         className="grow p-4"
         innerProps={{
